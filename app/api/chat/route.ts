@@ -17,9 +17,13 @@ export async function POST(request: Request) {
   });
 
   return result.toUIMessageStreamResponse({
-    onError: (e) => {
-      console.error(e);
-      return "Oops, an error occured!";
+    onError: (error) => {
+      console.error(error);
+      if (error instanceof Error) {
+        return error.message;
+      }
+
+      return "Something went wrong while generating a response.";
     },
   });
 }

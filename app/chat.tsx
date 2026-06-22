@@ -1,10 +1,11 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { isTextUIPart } from "ai";
+import { DefaultChatTransport, isTextUIPart } from "ai";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { ChatMessage } from "@/components/chat-message";
+import { ErrorMessage } from "@/components/error-message";
 import { SignInModal } from "@/components/sign-in-modal";
 
 interface ChatProps {
@@ -12,7 +13,11 @@ interface ChatProps {
 }
 
 export const ChatPage = ({ userName }: ChatProps) => {
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status, error } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+    }),
+  });
   const [input, setInput] = useState("");
 
   const isLoading = status === "submitted" || status === "streaming";
@@ -40,6 +45,8 @@ export const ChatPage = ({ userName }: ChatProps) => {
           role="log"
           aria-label="Chat messages"
         >
+          {error ? <ErrorMessage message={error.message} /> : null}
+
           {messages.map((message) => {
             const text = message.parts
               .filter(isTextUIPart)

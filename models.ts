@@ -1,3 +1,9 @@
-import { google } from "@ai-sdk/google";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
-export const model = google("gemini-2.0-flash-001");
+import { env } from "@/env";
+
+const google = createGoogleGenerativeAI({
+  apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
+
+export const model = google("gemini-2.5-flash");
