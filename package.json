@@ -16,8 +16,11 @@
     "check": "next lint && next typecheck"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.83",
+    "@ai-sdk/react": "^3.0.210",
     "@auth/drizzle-adapter": "^1.11.2",
     "@t3-oss/env-nextjs": "^0.13.11",
+    "ai": "^6.0.208",
     "drizzle-orm": "^0.45.2",
     "geist": "^1.7.2",
     "ioredis": "^5.11.1",
