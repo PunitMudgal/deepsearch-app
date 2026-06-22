@@ -1,34 +1,45 @@
-import {relations, sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
-    index,
-    integer,
-    pgTableCreator,
-    primaryKey,
-    text,
-    timestamp,
-    varchar,
-    boolean,
-  } from "drizzle-orm/pg-core";
-import { AdapterAccount } from "next-auth/adapters";
+  index,
+  integer,
+  pgTableCreator,
+  primaryKey,
+  text,
+  timestamp,
+  varchar,
+  json,
+  boolean,
+  serial,
+} from "drizzle-orm/pg-core";
+import { type AdapterAccount } from "next-auth/adapters";
 import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
-export const createTable = pgTableCreator((name) => `deepsearch_${name}`);
+/**
+ * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
+ * database instance for multiple projects.
+ *
+ * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
+ */
+export const createTable = pgTableCreator((name) => `ai-app-template_${name}`);
 
 export const users = createTable("user", {
-    id: varchar("id", { length: 255 }).notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
-    name: varchar("name", { length: 255 }),
-    email: varchar("email", { length: 255 }).notNull(),
-    emailVerified: timestamp("email_verified", {
-      mode: "date",
-      withTimezone: true,
-    }).default(sql`CURRENT_TIMESTAMP`),
-    image: varchar("image", { length: 255 }),
-    isAdmin: boolean("is_admin").notNull().default(false),
-})
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: varchar("name", { length: 255 }),
+  email: varchar("email", { length: 255 }).notNull(),
+  emailVerified: timestamp("email_verified", {
+    mode: "date",
+    withTimezone: true,
+  }).default(sql`CURRENT_TIMESTAMP`),
+  image: varchar("image", { length: 255 }),
+  isAdmin: boolean("is_admin").notNull().default(false),
+});
 
-export const userRelations = relations(users, ({many}) => ({
-  accounts: many(accounts)
-}))
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+}));
 
 export const accounts = createTable(
   "account",
@@ -101,14 +112,18 @@ export const verificationTokens = createTable(
   }),
 );
 
-export type User = InferSelectModel<typeof users>;
-export type NewUser = InferInsertModel<typeof users>;
+export declare namespace DB {
+  export type User = InferSelectModel<typeof users>;
+  export type NewUser = InferInsertModel<typeof users>;
 
-export type Account = InferSelectModel<typeof accounts>;
-export type NewAccount = InferInsertModel<typeof accounts>;
+  export type Account = InferSelectModel<typeof accounts>;
+  export type NewAccount = InferInsertModel<typeof accounts>;
 
-export type Session = InferSelectModel<typeof sessions>;
-export type NewSession = InferInsertModel<typeof sessions>;
+  export type Session = InferSelectModel<typeof sessions>;
+  export type NewSession = InferInsertModel<typeof sessions>;
 
-export type VerificationToken = InferSelectModel<typeof verificationTokens>;
-export type NewVerificationToken = InferInsertModel<typeof verificationTokens>;
+  export type VerificationToken = InferSelectModel<typeof verificationTokens>;
+  export type NewVerificationToken = InferInsertModel<
+    typeof verificationTokens
+  >;
+}
