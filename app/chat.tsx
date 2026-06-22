@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, isTextUIPart } from "ai";
+import { DefaultChatTransport } from "ai";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { ChatMessage } from "@/components/chat-message";
@@ -10,15 +10,17 @@ import { SignInModal } from "@/components/sign-in-modal";
 
 interface ChatProps {
   userName: string;
+  isAuthenticated: boolean;
 }
 
-export const ChatPage = ({ userName }: ChatProps) => {
+export const ChatPage = ({ userName, isAuthenticated }: ChatProps) => {
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
     }),
   });
   const [input, setInput] = useState("");
+  const [showSignInModal, setShowSignInModal] = useState(false);
 
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -30,6 +32,11 @@ export const ChatPage = ({ userName }: ChatProps) => {
     e.preventDefault();
 
     if (!input.trim() || isLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setShowSignInModal(true);
       return;
     }
 
@@ -47,21 +54,14 @@ export const ChatPage = ({ userName }: ChatProps) => {
         >
           {error ? <ErrorMessage message={error.message} /> : null}
 
-          {messages.map((message) => {
-            const text = message.parts
-              .filter(isTextUIPart)
-              .map((part) => part.text)
-              .join("");
-
-            return (
-              <ChatMessage
-                key={message.id}
-                text={text}
-                role={message.role}
-                userName={userName}
-              />
-            );
-          })}
+          {messages.map((message) => (
+            <ChatMessage
+              key={message.id}
+              parts={message.parts}
+              role={message.role}
+              userName={userName}
+            />
+          ))}
         </div>
 
         <div className="border-t border-gray-700">
@@ -73,7 +73,9 @@ export const ChatPage = ({ userName }: ChatProps) => {
               <input
                 value={input}
                 onChange={handleInputChange}
-                placeholder="Say something..."
+                placeholder={
+                  isAuthenticated ? "Say something..." : "Sign in to chat..."
+                }
                 autoFocus
                 disabled={isLoading}
                 aria-label="Chat input"
@@ -95,7 +97,10 @@ export const ChatPage = ({ userName }: ChatProps) => {
         </div>
       </div>
 
-      <SignInModal isOpen={false} onClose={() => {}} />
+      <SignInModal
+        isOpen={showSignInModal}
+        onClose={() => setShowSignInModal(false)}
+      />
     </>
   );
 };
