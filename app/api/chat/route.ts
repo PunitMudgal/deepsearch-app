@@ -3,6 +3,7 @@ import { convertToModelMessages, stepCountIs, streamText, tool } from "ai";
 import { z } from "zod";
 import { model } from "@/models";
 import { auth } from "@/server/auth";
+import { checkAndRecordRequest } from "@/server/rate-limit";
 import { searchTavily } from "@/server/search/tavily";
 
 export const maxDuration = 60;
@@ -24,6 +25,14 @@ export async function POST(request: Request) {
 
   if (!session?.user) {
     return new Response("Unauthorized", { status: 401 });
+  }
+
+  const rateLimitResult = await checkAndRecordRequest(session.user.id);
+
+  if (!rateLimitResult.allowed) {
+    return new Response("Too many requests. Please try again tomorrow.", {
+      status: 429,
+    });
   }
 
   const body = (await request.json()) as {

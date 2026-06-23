@@ -24,11 +24,39 @@ export const users = createTable("user", {
     }).default(sql`CURRENT_TIMESTAMP`),
     image: varchar("image", { length: 255 }),
     isAdmin: boolean("is_admin").notNull().default(false),
-})
+});
 
-export const userRelations = relations(users, ({many}) => ({
-  accounts: many(accounts)
-}))
+export const requests = createTable(
+  "request",
+  {
+    id: varchar("id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (request) => ({
+    userIdIdx: index("request_user_id_idx").on(request.userId),
+    createdAtIdx: index("request_created_at_idx").on(request.createdAt),
+  }),
+);
+
+export const userRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  requests: many(requests),
+}));
+
+export const requestsRelations = relations(requests, ({ one }) => ({
+  user: one(users, { fields: [requests.userId], references: [users.id] }),
+}));
 
 export const accounts = createTable(
   "account",
@@ -112,3 +140,6 @@ export type NewSession = InferInsertModel<typeof sessions>;
 
 export type VerificationToken = InferSelectModel<typeof verificationTokens>;
 export type NewVerificationToken = InferInsertModel<typeof verificationTokens>;
+
+export type Request = InferSelectModel<typeof requests>;
+export type NewRequest = InferInsertModel<typeof requests>;
