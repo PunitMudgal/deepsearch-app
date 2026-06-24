@@ -1,8 +1,15 @@
 import type { UIMessage } from "ai";
-import { convertToModelMessages, stepCountIs, streamText, tool } from "ai";
+import {
+  convertToModelMessages,
+  generateId,
+  stepCountIs,
+  streamText,
+  tool,
+} from "ai";
 import { z } from "zod";
 import { model } from "@/models";
 import { auth } from "@/server/auth";
+import { upsertChat } from "@/server/chat";
 import { checkAndRecordRequest } from "@/server/rate-limit";
 import { searchTavily } from "@/server/search/tavily";
 
@@ -20,6 +27,22 @@ When you answer:
 - Prefer multiple inline citations when several sources support your answer
 - If search returns no useful results, say so clearly instead of guessing`;
 
+function getChatTitle(messages: UIMessage[]) {
+  const firstUserMessage = messages.find((message) => message.role === "user");
+
+  if (!firstUserMessage) {
+    return "New chat";
+  }
+
+  const textPart = firstUserMessage.parts.find((part) => part.type === "text");
+
+  if (!textPart || textPart.type !== "text" || !textPart.text.trim()) {
+    return "New chat";
+  }
+
+  return textPart.text.trim().slice(0, 100);
+}
+
 export async function POST(request: Request) {
   const session = await auth();
 
@@ -36,10 +59,20 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json()) as {
-    messages: Array<UIMessage>;
+    messages: UIMessage[];
+    chatId?: string;
   };
 
-  const { messages } = body;
+  const { messages, chatId } = body;
+  const resolvedChatId = chatId ?? crypto.randomUUID();
+  const title = getChatTitle(messages);
+
+  await upsertChat({
+    userId: session.user.id,
+    chatId: resolvedChatId,
+    title,
+    messages,
+  });
 
   const result = streamText({
     model,
@@ -60,6 +93,20 @@ export async function POST(request: Request) {
   });
 
   return result.toUIMessageStreamResponse({
+    originalMessages: messages,
+    generateMessageId: generateId,
+    onFinish: async ({ messages: updatedMessages }) => {
+      try {
+        await upsertChat({
+          userId: session.user.id,
+          chatId: resolvedChatId,
+          title: getChatTitle(updatedMessages),
+          messages: updatedMessages,
+        });
+      } catch (error) {
+        console.error("Failed to save chat:", error);
+      }
+    },
     onError: (error) => {
       console.error(error);
       if (error instanceof Error) {
