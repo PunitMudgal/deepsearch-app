@@ -9,6 +9,8 @@ export const env = createEnv({
   server: {
     AUTH_DISCORD_ID: z.string(),
     AUTH_DISCORD_SECRET: z.string(),
+    AUTH_GITHUB_ID: z.string(),
+    AUTH_GITHUB_SECRET: z.string(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
     TAVILY_API_KEY: z.string(),
     REDIS_URL: z.string().url(),
@@ -36,6 +38,8 @@ export const env = createEnv({
   runtimeEnv: {
     AUTH_DISCORD_ID: process.env.AUTH_DISCORD_ID,
     AUTH_DISCORD_SECRET: process.env.AUTH_DISCORD_SECRET,
+    AUTH_GITHUB_ID: process.env.AUTH_GITHUB_ID,
+    AUTH_GITHUB_SECRET: process.env.AUTH_GITHUB_SECRET,
     GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     TAVILY_API_KEY: process.env.TAVILY_API_KEY,
     REDIS_URL: process.env.REDIS_URL,

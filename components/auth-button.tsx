@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn, signOut } from "next-auth/react";
-import { siDiscord } from "simple-icons/icons";
+import { siDiscord, siGithub } from "simple-icons/icons";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -35,14 +35,25 @@ export function AuthButton({ isAuthenticated, userImage }: AuthButtonProps) {
       </button>
     </div>
   ) : (
-    <button
-      onClick={() => void signIn("discord")}
-      className="hover:bg-gray-750 flex w-full items-center justify-center gap-2 rounded-lg bg-gray-800 p-3 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-    >
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-        <path d={siDiscord.path} />
-      </svg>
-      Sign in
-    </button>
+    <div className="flex flex-col gap-2">
+      <button
+        onClick={() => void signIn("github")}
+        className="hover:bg-gray-750 flex w-full items-center justify-center gap-2 rounded-lg bg-gray-800 p-3 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      >
+        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d={siGithub.path} />
+        </svg>
+        Sign in with GitHub
+      </button>
+      <button
+        onClick={() => void signIn("discord")}
+        className="hover:bg-gray-750 flex w-full items-center justify-center gap-2 rounded-lg bg-gray-800 p-3 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      >
+        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d={siDiscord.path} />
+        </svg>
+        Sign in with Discord
+      </button>
+    </div>
   );
 }
