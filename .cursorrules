@@ -1,8 +1,7 @@
-- Prefer dash case for file names:
+- Prefer shadcn components for ui
 
-AuthButton.tsx -> auth-button.tsx
-DeleteChatButton.tsx -> delete-chat-button.tsx
 
+- sometime i may pass the example of old ai sdk v5 in prompt but you need to use the AI SDK v6 latest code not old v5;
 - Prefer TypeScript over JavaScript
 
 - Where possible, adjust type imports so they use 'type' on the entire import, not just the specific named imports:
