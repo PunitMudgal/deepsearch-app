@@ -3,26 +3,47 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ChatMessage } from "@/components/chat-message";
 import { ErrorMessage } from "@/components/error-message";
 import { SignInModal } from "@/components/sign-in-modal";
+import { isNewChatCreated } from "@/lib/chat";
 
 interface ChatProps {
   userName: string;
   isAuthenticated: boolean;
+  chatId?: string;
 }
 
-export const ChatPage = ({ userName, isAuthenticated }: ChatProps) => {
+export const ChatPage = ({ userName, isAuthenticated, chatId }: ChatProps) => {
+  const router = useRouter();
+  const [data, setData] = useState<unknown[]>([]);
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
+      body: {
+        chatId,
+      },
     }),
+    onData: (dataPart) => {
+      if (dataPart.type === "data-newChatCreated") {
+        setData((previous) => [...previous, dataPart.data]);
+      }
+    },
   });
   const [input, setInput] = useState("");
   const [showSignInModal, setShowSignInModal] = useState(false);
 
   const isLoading = status === "submitted" || status === "streaming";
+
+  useEffect(() => {
+    const lastDataItem = data[data.length - 1];
+
+    if (isNewChatCreated(lastDataItem)) {
+      router.push(`?id=${lastDataItem.chatId}`);
+    }
+  }, [data, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);

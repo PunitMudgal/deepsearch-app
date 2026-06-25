@@ -1,6 +1,8 @@
 import type { UIMessage } from "ai";
 import {
   convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
   generateId,
   stepCountIs,
   streamText,
@@ -64,6 +66,7 @@ export async function POST(request: Request) {
   };
 
   const { messages, chatId } = body;
+  const isNewChat = !chatId;
   const resolvedChatId = chatId ?? crypto.randomUUID();
   const title = getChatTitle(messages);
 
@@ -74,27 +77,40 @@ export async function POST(request: Request) {
     messages,
   });
 
-  const result = streamText({
-    model,
-    system: systemPrompt,
-    messages: await convertToModelMessages(messages),
-    stopWhen: stepCountIs(8),
-    tools: {
-      searchWeb: tool({
-        description: "Search the web for up-to-date information on a topic",
-        inputSchema: z.object({
-          query: z.string().describe("The query to search the web for"),
-        }),
-        execute: async ({ query }, { abortSignal }) => {
-          return searchTavily(query, abortSignal);
-        },
-      }),
-    },
-  });
-
-  return result.toUIMessageStreamResponse({
+  const stream = createUIMessageStream({
     originalMessages: messages,
-    generateMessageId: generateId,
+    generateId,
+    execute: async ({ writer }) => {
+      if (isNewChat) {
+        writer.write({
+          type: "data-newChatCreated",
+          data: {
+            type: "NEW_CHAT_CREATED",
+            chatId: resolvedChatId,
+          },
+        });
+      }
+
+      const result = streamText({
+        model,
+        system: systemPrompt,
+        messages: await convertToModelMessages(messages),
+        stopWhen: stepCountIs(8),
+        tools: {
+          searchWeb: tool({
+            description: "Search the web for up-to-date information on a topic",
+            inputSchema: z.object({
+              query: z.string().describe("The query to search the web for"),
+            }),
+            execute: async ({ query }, { abortSignal }) => {
+              return searchTavily(query, abortSignal);
+            },
+          }),
+        },
+      });
+
+      writer.merge(result.toUIMessageStream());
+    },
     onFinish: async ({ messages: updatedMessages }) => {
       try {
         await upsertChat({
@@ -116,4 +132,6 @@ export async function POST(request: Request) {
       return "Something went wrong while generating a response.";
     },
   });
+
+  return createUIMessageStreamResponse({ stream });
 }
