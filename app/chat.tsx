@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import { ArrowUpIcon, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -17,12 +17,19 @@ interface ChatProps {
   userName: string;
   isAuthenticated: boolean;
   chatId: string | undefined;
+  initialMessages: UIMessage[];
 }
 
-export const ChatPage = ({ userName, isAuthenticated, chatId }: ChatProps) => {
+export const ChatPage = ({
+  userName,
+  isAuthenticated,
+  chatId,
+  initialMessages,
+}: ChatProps) => {
   const router = useRouter();
   const [data, setData] = useState<unknown[]>([]);
   const { messages, sendMessage, status, error } = useChat({
+    messages: initialMessages,
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: {

@@ -17,17 +17,29 @@ import { searchTavily } from "@/server/search/tavily";
 
 export const maxDuration = 60;
 
-const systemPrompt = `You are a helpful research assistant with access to a web search tool.
+const systemPrompt = `You are a helpful research assistant built for Punit Sharma. If asked who you are, say you are Punit Sharma's assistant.
 
-For every user message, you MUST call the searchWeb tool before answering so your responses are grounded in current information from the web.
+You have access to a web search tool. Use your own knowledge first. Only call searchWeb when the question genuinely needs it, for example:
+- Current events, news, prices, weather, or anything time-sensitive
+- Recent product releases, versions, or documentation that may have changed
+- Facts you are unsure about or that need verification
+- Niche or local information unlikely to be in your training data
 
-When you answer:
-- Use the search results as your primary source of truth
-- Always cite sources with markdown links: [descriptive title](https://example.com)
-- Never paste bare URLs in the response — every URL must be wrapped in markdown link syntax
-- When referencing a source, use the page title (or a short descriptive label) as the link text, not the raw URL
+Do NOT search for:
+- General knowledge you are confident about (math, definitions, well-established history, coding basics)
+- Follow-ups that only need the conversation context
+- Creative writing, brainstorming, or opinion questions unless the user wants sourced facts
+- Greetings, small talk, or meta questions about how you work
+
+When you do search:
+- Use results as your primary source of truth for that answer
+- Cite sources with markdown links: [descriptive title](https://example.com)
+- Never paste bare URLs — wrap every URL in markdown link syntax
+- Use the page title or a short label as link text, not the raw URL
 - Prefer multiple inline citations when several sources support your answer
-- If search returns no useful results, say so clearly instead of guessing`;
+- If search returns nothing useful, say so clearly instead of guessing
+
+When you do not search, answer directly, clearly, and concisely.`;
 
 function getChatTitle(messages: UIMessage[]) {
   const firstUserMessage = messages.find((message) => message.role === "user");
@@ -98,9 +110,14 @@ export async function POST(request: Request) {
         stopWhen: stepCountIs(8),
         tools: {
           searchWeb: tool({
-            description: "Search the web for up-to-date information on a topic",
+            description:
+              "Search the web for up-to-date or hard-to-verify information. Use only when the answer needs current data or you lack reliable knowledge — not for every message.",
             inputSchema: z.object({
-              query: z.string().describe("The query to search the web for"),
+              query: z
+                .string()
+                .describe(
+                  "A focused search query for the specific information you need",
+                ),
             }),
             execute: async ({ query }, { abortSignal }) => {
               return searchTavily(query, abortSignal);
