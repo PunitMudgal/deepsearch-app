@@ -1,21 +1,44 @@
-import { BrainCircuit } from "lucide-react";
-import React from "react";
+"use client";
+
+import Image from "next/image";
+import { getGreeting } from "@/lib/chat-greetings";
 
 interface ChatEmptyStateProps {
   userName: string;
+  chatId: string;
 }
 
-export function ChatEmptyState({ userName }: ChatEmptyStateProps) {
+function GreetingSubtitle({
+  before,
+  highlight,
+  after,
+}: {
+  before: string;
+  highlight: string;
+  after: string;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center pt-8 pb-12 px-4 text-center select-none animate-in fade-in duration-500">
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 p-4 shadow-[0_0_40px_rgba(139,92,246,0.15)] ring-1 ring-white/5">
-        <BrainCircuit className="h-8 w-8 text-violet-400" />
+    <>
+      {before}
+      <span className="font-semibold text-violet-400">{highlight}</span>
+      {after}
+    </>
+  );
+}
+
+export function ChatEmptyState({ userName, chatId }: ChatEmptyStateProps) {
+  const greeting = getGreeting(chatId, userName);
+
+  return (
+    <div className="flex flex-col items-center justify-center px-4 pb-12 pt-8 text-center select-none duration-500 animate-in fade-in">
+      <div className="mb-6 flex items-center justify-center rounded-2xl p-4">
+        <Image src="/logo-white.png" alt="DeepSearch" width={72} height={72} />
       </div>
-      <h1 className="text-2xl font-medium tracking-tight text-zinc-100 mb-2">
-        Good Morning, {userName || "Guest"}
+      <h1 className="mb-2 text-4xl font-medium tracking-tight text-zinc-100">
+        {greeting.title}
       </h1>
       <h2 className="text-xl font-medium tracking-tight text-zinc-400">
-        How Can I <span className="text-violet-400 font-semibold">Assist You</span> Today?
+        <GreetingSubtitle {...greeting.subtitle} />
       </h2>
     </div>
   );

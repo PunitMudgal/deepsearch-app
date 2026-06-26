@@ -6,6 +6,8 @@ import {
   type UIMessage,
 } from "ai";
 import { Loader2, Search } from "lucide-react";
+import { MessageCopyButton } from "@/components/message-copy-button";
+import { cn } from "@/lib/utils";
 
 export type MessagePart = NonNullable<UIMessage["parts"]>[number];
 
@@ -13,6 +15,14 @@ interface ChatMessageProps {
   parts: MessagePart[];
   role: string;
   userName: string;
+}
+
+function getMessageCopyText(parts: MessagePart[]): string {
+  return parts
+    .filter(isTextUIPart)
+    .map((part) => part.text)
+    .filter((text) => text.trim().length > 0)
+    .join("\n\n");
 }
 
 const components: Components = {
@@ -26,13 +36,13 @@ const components: Components = {
     </code>
   ),
   pre: ({ children }) => (
-    <pre className="mb-4 overflow-x-auto rounded-lg bg-gray-700 p-4">
+    <pre className="mb-4 overflow-x-auto rounded-lg bg-zinc-900/80 p-4 ring-1 ring-zinc-800">
       {children}
     </pre>
   ),
   a: ({ children, ...props }) => (
     <a
-      className="text-blue-400 underline"
+      className="text-violet-400 underline underline-offset-2 hover:text-violet-300"
       target="_blank"
       rel="noopener noreferrer"
       {...props}
@@ -74,25 +84,25 @@ function SearchWebToolPart({ part }: { part: MessagePart }) {
       : null;
 
   return (
-    <div className="mb-3 rounded-lg border border-gray-600 bg-gray-700/40 p-3 text-sm">
-      <div className="mb-1 flex items-center gap-2 font-medium text-gray-300">
+    <div className="mb-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-3 text-sm">
+      <div className="mb-1 flex items-center gap-2 font-medium text-zinc-300">
         {isLoading ? (
-          <Loader2 className="size-4 animate-spin text-blue-400" />
+          <Loader2 className="size-4 animate-spin text-violet-400" />
         ) : (
-          <Search className="size-4 text-blue-400" />
+          <Search className="size-4 text-violet-400" />
         )}
         <span>Search Web</span>
       </div>
 
       {query ? (
-        <p className="text-gray-400">
+        <p className="text-zinc-400">
           {isLoading ? "Searching for" : "Searched for"}:{" "}
-          <span className="text-gray-300">&quot;{query}&quot;</span>
+          <span className="text-zinc-200">&quot;{query}&quot;</span>
         </p>
       ) : null}
 
       {results ? (
-        <p className="mt-1 text-gray-400">
+        <p className="mt-1 text-zinc-500">
           Found {results.length} result{results.length === 1 ? "" : "s"}
         </p>
       ) : null}
@@ -111,7 +121,7 @@ function MessagePartContent({ part }: { part: MessagePart }) {
     }
 
     return (
-      <div className="prose prose-invert max-w-none">
+      <div className="prose prose-invert max-w-none text-[15px] leading-relaxed text-zinc-200">
         <Markdown>{part.text}</Markdown>
       </div>
     );
@@ -125,7 +135,7 @@ function MessagePartContent({ part }: { part: MessagePart }) {
     }
 
     return (
-      <div className="mb-3 rounded-lg border border-gray-600 bg-gray-700/40 p-3 text-sm text-gray-400">
+      <div className="mb-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-3 text-sm text-zinc-400">
         Called tool: {toolName} ({part.state})
       </div>
     );
@@ -136,16 +146,26 @@ function MessagePartContent({ part }: { part: MessagePart }) {
 
 export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
   const isAI = role === "assistant";
+  const copyText = getMessageCopyText(parts);
+  const hasCopyableText = copyText.trim().length > 0;
 
   return (
-    <div className="mb-6">
+    <article
+      className={cn(
+        "group w-full",
+        isAI ? "pr-4" : "flex flex-col items-end pl-8",
+      )}
+    >
       <div
-        className={`rounded-lg p-4 ${
-          isAI ? "bg-gray-800 text-gray-300" : "bg-gray-900 text-gray-300"
-        }`}
+        className={cn(
+          "relative rounded-2xl px-4 py-3 transition-colors",
+          isAI
+            ? "bg-transparent"
+            : "max-w-[85%] bg-zinc-800/60 ring-1 ring-zinc-800/80",
+        )}
       >
-        <p className="mb-2 text-sm font-semibold text-gray-400">
-          {isAI ? "AI" : userName}
+        <p className="mb-2 text-xs font-medium text-zinc-500">
+          {isAI ? "DeepSearch" : userName}
         </p>
 
         <div className="space-y-1">
@@ -154,6 +174,17 @@ export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
           ))}
         </div>
       </div>
-    </div>
+
+      {hasCopyableText ? (
+        <div
+          className={cn(
+            "mt-1 flex h-8 items-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100",
+            isAI ? "justify-start" : "justify-end pr-1",
+          )}
+        >
+          <MessageCopyButton text={copyText} />
+        </div>
+      ) : null}
+    </article>
   );
 };

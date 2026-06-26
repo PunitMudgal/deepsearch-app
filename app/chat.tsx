@@ -2,6 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SignInModal } from "@/components/sign-in-modal";
@@ -9,6 +10,12 @@ import { isNewChatCreated } from "@/lib/chat";
 import { ChatInput } from "@/components/chat-input";
 import { ChatEmptyState } from "@/components/chat-empty-state";
 import { ChatMessages } from "@/components/chat-messages";
+import { CHAT_PARTICLE_COLORS } from "@/components/particles";
+
+const Particles = dynamic(
+  () => import("@/components/particles").then((mod) => mod.Particles),
+  { ssr: false },
+);
 
 interface ChatProps {
   userName: string;
@@ -77,23 +84,41 @@ export const ChatPage = ({
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col w-full h-full overflow-hidden bg-[#0b0b0d]">
+      <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-[#0b0b0d]">
         {messages.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center px-4 w-full h-full">
-            <ChatEmptyState userName={userName} />
-            <div className="w-full">
-              <ChatInput
-                input={input}
-                handleInputChange={handleInputChange}
-                handleSubmit={handleSubmit}
-                isLoading={isLoading}
-                isAuthenticated={isAuthenticated}
+          <>
+            <div className="pointer-events-none absolute inset-0 z-0">
+              <Particles
+                particleColors={CHAT_PARTICLE_COLORS}
+                particleCount={320}
+                particleSpread={12}
+                speed={0.1}
+                particleBaseSize={160}
+                moveParticlesOnHover={false}
+                alphaParticles
+                sizeRandomness={1}
+                cameraDistance={16}
+                pixelRatio={1.5}
               />
+              <div className="absolute inset-0 bg-[#0b0b0d]/50" />
             </div>
-          </div>
+
+            <div className="relative z-10 flex h-full w-full flex-1 flex-col items-center justify-center px-4">
+              <ChatEmptyState userName={userName} chatId={chatId} />
+              <div className="w-full">
+                <ChatInput
+                  input={input}
+                  handleInputChange={handleInputChange}
+                  handleSubmit={handleSubmit}
+                  isLoading={isLoading}
+                  isAuthenticated={isAuthenticated}
+                />
+              </div>
+            </div>
+          </>
         ) : (
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 w-full">
+            <div className="min-h-0 w-full flex-1">
               <ChatMessages
                 messages={messages}
                 userName={userName}

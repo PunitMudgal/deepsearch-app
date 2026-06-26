@@ -64,15 +64,15 @@ function SidebarHeaderContent({ isAuthenticated }: { isAuthenticated: boolean })
     )}>
       {!isCollapsed && (
         <div className="flex items-center gap-2.5 select-none animate-in fade-in duration-200">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/20">
-            <BrainCircuit className="h-4.5 w-4.5" />
-          </div>
+          {/* <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/20"> */}
+            <Image src="/logo-white.png" alt="DeepSearch" width={32} height={32} />
+          {/* </div> */}
           <span className="text-base font-bold text-white tracking-tight">DeepSearch</span>
         </div>
       )}
       {isCollapsed && (
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/20 mb-2 cursor-pointer" onClick={toggleSidebar}>
-          <BrainCircuit className="h-4.5 w-4.5 animate-pulse" />
+          <Image src="/logo-white.png" alt="DeepSearch" width={32} height={32} className="animate-pulse" />
         </div>
       )}
       {!isCollapsed && (
