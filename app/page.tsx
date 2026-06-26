@@ -36,6 +36,7 @@ export default async function HomePage({
   const initialMessages = mapMessagesForChat(chat?.messages);
 
   return (
+    <div className="bg-slate-950">
     <ChatSidebarLayout
       activeChatId={id}
       chats={chats}
@@ -47,8 +48,9 @@ export default async function HomePage({
         userName={userName}
         isAuthenticated={isAuthenticated}
         chatId={id}
-        initialMessages={initialMessages}
-      />
-    </ChatSidebarLayout>
+          initialMessages={initialMessages}
+        />
+      </ChatSidebarLayout>
+    </div>
   );
 }

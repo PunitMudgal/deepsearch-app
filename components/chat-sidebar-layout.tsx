@@ -52,7 +52,7 @@ export function ChatSidebarLayout({
               {isAuthenticated ? (
                 <SidebarGroupAction asChild title="New Chat">
                   <Link href="/">
-                    <PlusIcon />
+                    <PlusIcon className="text-white" />
                     <span className="sr-only">New Chat</span>
                   </Link>
                 </SidebarGroupAction>
@@ -64,9 +64,9 @@ export function ChatSidebarLayout({
             <SidebarGroup>
               <SidebarGroupContent>
                 {chats.length > 0 ? (
-                  <SidebarMenu>
+                  <SidebarMenu >
                     {chats.map((chat) => (
-                      <SidebarMenuItem key={chat.id}>
+                      <SidebarMenuItem className="p-1 rounded-xl" key={chat.id}>
                         <SidebarMenuButton
                           asChild
                           isActive={chat.id === activeChatId}
@@ -96,7 +96,7 @@ export function ChatSidebarLayout({
             />
           </SidebarFooter>
 
-          <SidebarRail />
+          {/* <SidebarRail /> */}
         </Sidebar>
 
         <SidebarInset className="flex min-h-svh flex-col">
