@@ -15,6 +15,7 @@ import { model } from "@/models";
 import { auth } from "@/server/auth";
 import { upsertChat } from "@/server/chat";
 import { checkAndRecordRequest } from "@/server/rate-limit";
+import { scrapePages } from "@/server/search/scrape-pages";
 import { searchTavily } from "@/server/search/tavily";
 
 export const maxDuration = 60;
@@ -26,29 +27,15 @@ const langfuse = new Langfuse({
   baseUrl: env.LANGFUSE_BASE_URL,
 });
 
-const systemPrompt = `You are a helpful research assistant built for Punit Sharma. If asked who you are, say you are Punit Sharma's assistant.
+const systemPrompt = `You are Punit Sharma's research assistant. If asked who you are, say so. you have websearch and page scraping tools.
 
-You have access to a web search tool. Use your own knowledge first. Only call searchWeb when the question genuinely needs it, for example:
-- Current events, news, prices, weather, or anything time-sensitive
-- Recent product releases, versions, or documentation that may have changed
-- Facts you are unsure about or that need verification
-- Niche or local information unlikely to be in your training data
+Use your own knowledge first. Only call searchWeb for: current events/prices/news, recent releases or docs, facts you're unsure of, or niche/local info. Skip it for general knowledge, follow-ups answerable from context, creative/opinion tasks, or small talk.
 
-Do NOT search for:
-- General knowledge you are confident about (math, definitions, well-established history, coding basics)
-- Follow-ups that only need the conversation context
-- Creative writing, brainstorming, or opinion questions unless the user wants sourced facts
-- Greetings, small talk, or meta questions about how you work
+Use scrapePages when snippets aren't enough — long articles, missing details, or sources you need to cite precisely. Pass it specific URLs from search results. Typical flow: search → scrape top 1–3 URLs → answer. Some scrapes fail (robots.txt, rate limits); fall back to snippets if so.
 
-When you do search:
-- Use results as your primary source of truth for that answer
-- Cite sources with markdown links: [descriptive title](https://example.com)
-- Never paste bare URLs — wrap every URL in markdown link syntax
-- Use the page title or a short label as link text, not the raw URL
-- Prefer multiple inline citations when several sources support your answer
-- If search returns nothing useful, say so clearly instead of guessing
+When citing: always use markdown links [title](url), never bare URLs. If search/scrape returns nothing useful, say so instead of guessing.
 
-When you do not search, answer directly, clearly, and concisely.`;
+Otherwise, answer directly and concisely.`;
 
 function getChatTitle(messages: UIMessage[]) {
   const firstUserMessage = messages.find((message) => message.role === "user");
@@ -142,6 +129,42 @@ export async function POST(request: Request) {
             }),
             execute: async ({ query }, { abortSignal }) => {
               return searchTavily(query, abortSignal);
+            },
+          }),
+          scrapePages: tool({
+            description:
+              "Fetch the full text of web pages as markdown. Use after searchWeb when snippets are insufficient and you need complete page content from specific URLs.",
+            inputSchema: z.object({
+              urls: z
+                .array(z.string())
+                .min(1)
+                .max(5)
+                .describe("URLs to scrape for full page content"),
+            }),
+            execute: async ({ urls }, { abortSignal }) => {
+              if (abortSignal?.aborted) {
+                throw abortSignal.reason ?? new Error("Aborted");
+              }
+
+              const result = await scrapePages(urls);
+
+              if (result.success) {
+                return {
+                  pages: result.results.map(({ url, result: crawlResult }) => ({
+                    url,
+                    markdown: crawlResult.data,
+                  })),
+                };
+              }
+
+              return {
+                error: result.error,
+                pages: result.results.map(({ url, result: crawlResult }) =>
+                  crawlResult.success
+                    ? { url, markdown: crawlResult.data }
+                    : { url, error: crawlResult.error },
+                ),
+              };
             },
           }),
         },
