@@ -5,13 +5,14 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { ArrowUpIcon, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { StickToBottom } from "use-stick-to-bottom";
 import { ChatMessage } from "@/components/chat-message";
 import { ErrorMessage } from "@/components/error-message";
 import { SignInModal } from "@/components/sign-in-modal";
 import { isNewChatCreated } from "@/lib/chat";
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {Field} from "@/components/ui/field"
 
 interface ChatProps {
   userName: string;
@@ -81,39 +82,42 @@ export const ChatPage = ({
   return (
     <>
       <div className="flex flex-1 flex-col w-full bg-stone-950">
-        <div
-          className="mx-auto w-full max-w-[65ch] flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500"
-          role="log"
-          aria-label="Chat messages"
+        <StickToBottom
+          className="relative mx-auto flex min-h-0 w-full max-w-[65ch] flex-1 flex-col [&>div]:scrollbar-thin [&>div]:scrollbar-track-gray-800 [&>div]:scrollbar-thumb-gray-600 hover:[&>div]:scrollbar-thumb-gray-500"
+          resize="smooth"
+          initial="smooth"
         >
-          {error ? <ErrorMessage message={error.message} /> : null}
-
-          {messages.map((message) => (
-            <ChatMessage
-              key={message.id}
-              parts={message.parts}
-              role={message.role}
-              userName={userName}
-            />
-          ))}
-        </div>
-
-          <form
-            onSubmit={handleSubmit}
-            className="mx-auto min-w-2/3 p-4"
+          <StickToBottom.Content
+            className="p-4"
+            role="log"
+            aria-label="Chat messages"
           >
+            {error ? <ErrorMessage message={error.message} /> : null}
 
+            {messages.map((message) => (
+              <ChatMessage
+                key={message.id}
+                parts={message.parts}
+                role={message.role}
+                userName={userName}
+              />
+            ))}
+          </StickToBottom.Content>
 
-
-            {/* input field */}
-            <Field orientation="horizontal" className="flex gap-2 w-full p-1 px-5 bg-stone-900 rounded-full h-16">
-              {/* File upload button */}
-<Button variant="outline" className="p-4 h-full text-white hover:text-gray-400 rounded-full">
-  <Plus />
-</Button>
+          <form onSubmit={handleSubmit} className="mx-auto min-w-2/3 p-4">
+            <Field
+              orientation="horizontal"
+              className="flex h-16 w-full gap-2 rounded-full bg-stone-900 p-1 px-5"
+            >
+              <Button
+                variant="outline"
+                className="h-full rounded-full p-4 text-white hover:text-gray-400"
+              >
+                <Plus />
+              </Button>
               <Input
                 type="text"
-                className="h-full p-4 text-white rounded-full outline-0 border-0 focus:ring-0 focus:ring-offset-0 bg-transparent"
+                className="h-full rounded-full border-0 bg-transparent p-4 text-white outline-0 focus:ring-0 focus:ring-offset-0"
                 value={input}
                 onChange={handleInputChange}
                 placeholder={
@@ -125,7 +129,7 @@ export const ChatPage = ({
               />
               <Button
                 variant="outline"
-                className="p-4 h-full text-white hover:text-gray-400 rounded-full"
+                className="h-full rounded-full p-4 text-white hover:text-gray-400"
                 type="submit"
                 disabled={isLoading}
               >
@@ -137,8 +141,8 @@ export const ChatPage = ({
               </Button>
             </Field>
           </form>
+        </StickToBottom>
       </div>
-
       <SignInModal
         isOpen={showSignInModal}
         onClose={() => setShowSignInModal(false)}
