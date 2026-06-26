@@ -2,17 +2,13 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { ArrowUpIcon, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { StickToBottom } from "use-stick-to-bottom";
-import { ChatMessage } from "@/components/chat-message";
-import { ErrorMessage } from "@/components/error-message";
 import { SignInModal } from "@/components/sign-in-modal";
 import { isNewChatCreated } from "@/lib/chat";
-import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { ChatInput } from "@/components/chat-input";
+import { ChatEmptyState } from "@/components/chat-empty-state";
+import { ChatMessages } from "@/components/chat-messages";
 
 interface ChatProps {
   userName: string;
@@ -81,67 +77,40 @@ export const ChatPage = ({
 
   return (
     <>
-      <div className="flex flex-1 flex-col w-full bg-stone-950">
-        <StickToBottom
-          className="relative mx-auto flex min-h-0 w-full max-w-[65ch] flex-1 flex-col [&>div]:scrollbar-thin [&>div]:scrollbar-track-gray-800 [&>div]:scrollbar-thumb-gray-600 hover:[&>div]:scrollbar-thumb-gray-500"
-          resize="smooth"
-          initial="smooth"
-        >
-          <StickToBottom.Content
-            className="p-4"
-            role="log"
-            aria-label="Chat messages"
-          >
-            {error ? <ErrorMessage message={error.message} /> : null}
-
-            {messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                parts={message.parts}
-                role={message.role}
+      <div className="flex flex-1 flex-col w-full h-full bg-[#0b0b0d] overflow-hidden">
+        {messages.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center px-4 w-full h-full">
+            <ChatEmptyState userName={userName} />
+            <div className="w-full">
+              <ChatInput
+                input={input}
+                handleInputChange={handleInputChange}
+                handleSubmit={handleSubmit}
+                isLoading={isLoading}
+                isAuthenticated={isAuthenticated}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-1 flex-col h-full overflow-hidden relative">
+            <div className="flex-1 min-h-0 w-full overflow-hidden">
+              <ChatMessages
+                messages={messages}
                 userName={userName}
+                error={error}
               />
-            ))}
-          </StickToBottom.Content>
-
-          <form onSubmit={handleSubmit} className="mx-auto min-w-2/3 p-4">
-            <Field
-              orientation="horizontal"
-              className="flex h-16 w-full gap-2 rounded-full bg-stone-900 p-1 px-5  "
-            >
-              <Button
-                variant="outline"
-                className="h-full rounded-full p-4 text-white hover:text-gray-400"
-              >
-                <Plus />
-              </Button>
-              <Input
-                type="text"
-                className="h-full rounded-full border-0 bg-transparent p-4 text-white outline-0 focus:ring-0 focus:ring-offset-0"
-                value={input}
-                onChange={handleInputChange}
-                placeholder={
-                  isAuthenticated ? "Ask Anything..." : "Sign in to chat..."
-                }
-                autoFocus
-                disabled={isLoading}
-                aria-label="Chat input"
+            </div>
+            <div className="shrink-0 w-full bg-gradient-to-t from-[#0b0b0d] via-[#0b0b0d]/95 to-transparent pt-6 pb-4 px-4 relative z-10">
+              <ChatInput
+                input={input}
+                handleInputChange={handleInputChange}
+                handleSubmit={handleSubmit}
+                isLoading={isLoading}
+                isAuthenticated={isAuthenticated}
               />
-              <Button
-                variant="outline"
-                className="h-full rounded-full p-4 text-white hover:text-gray-400"
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <ArrowUpIcon />
-                )}
-              </Button>
-            </Field>
-          </form>
-        </StickToBottom>
+            </div>
+          </div>
+        )}
       </div>
       <SignInModal
         isOpen={showSignInModal}

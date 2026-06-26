@@ -118,8 +118,8 @@ export function ChatSidebarLayout({
 
   return (
     <TooltipProvider>
-      <SidebarProvider className="dark min-h-svh bg-zinc-950">
-        <Sidebar className="border-r border-zinc-900/60 [&_[data-sidebar=sidebar]]:bg-[#0e0e11] text-zinc-300">
+      <SidebarProvider className="dark h-svh overflow-hidden bg-zinc-950">
+        <Sidebar collapsible="icon" className="border-r border-zinc-900/60 [&_[data-sidebar=sidebar]]:bg-[#0e0e11] text-zinc-300">
           <SidebarHeader className="p-0">
             <SidebarHeaderContent isAuthenticated={isAuthenticated} />
           </SidebarHeader>
@@ -139,12 +139,12 @@ export function ChatSidebarLayout({
                 label="Home"
                 isActive={!activeChatId}
               />
-              <SidebarItem
+              {/* <SidebarItem
                 href="#"
                 icon={<Bell className="h-4 w-4" />}
                 label="Notifications"
                 badge={3}
-              />
+              /> */}
               <SidebarItem
                 href="#"
                 icon={<Settings className="h-4 w-4" />}
@@ -166,7 +166,7 @@ export function ChatSidebarLayout({
                   </Link>
                 )}
               </div>
-              <div className="mt-1 flex flex-col gap-1 max-h-[220px] overflow-y-auto no-scrollbar">
+              <div className="mt-1 flex flex-col gap-1  overflow-y-auto no-scrollbar">
                 {filteredChats.length > 0 ? (
                   filteredChats.map((chat) => {
                     const isActive = chat.id === activeChatId;
@@ -192,40 +192,10 @@ export function ChatSidebarLayout({
               </div>
             </div>
 
-            {/* OTHER Group */}
-            <div className="mt-6 mb-4">
-              <div className="px-3 py-1.5 text-[11px] font-bold text-zinc-500 tracking-wider uppercase select-none">
-                <span>Other</span>
-              </div>
-              <div className="mt-1 flex flex-col gap-1">
-                <SidebarItem
-                  href="#"
-                  icon={<FileText className="h-4 w-4" />}
-                  label="Documentation"
-                />
-                <SidebarItem
-                  href="#"
-                  icon={<Gift className="h-4 w-4" />}
-                  label="Refer a Friend"
-                />
-                <SidebarItem
-                  href="#"
-                  icon={<Inbox className="h-4 w-4" />}
-                  label="Inbox"
-                />
-                <SidebarItem
-                  href="#"
-                  icon={<MessageSquareMore className="h-4 w-4" />}
-                  label="Support"
-                />
-              </div>
-            </div>
           </SidebarContent>
 
           {/* Sidebar Footer */}
           <SidebarFooter className="p-3 gap-3">
-            {/* Boost with AI card */}
-            <PromoCard />
 
             {/* User Profile dropdown wrapper */}
             <div ref={profileRef} className="relative w-full">
@@ -295,7 +265,7 @@ export function ChatSidebarLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset className="flex min-h-svh flex-col bg-[#0b0b0d]">
+        <SidebarInset className="flex h-svh flex-col bg-[#0b0b0d] overflow-hidden">
           <MobileHeader />
           {children}
         </SidebarInset>
@@ -422,29 +392,6 @@ function SidebarItem({
   return content;
 }
 
-function PromoCard() {
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
-
-  if (isCollapsed) return null;
-
-  return (
-    <div className="p-4 bg-zinc-900/25 border border-zinc-850 rounded-2xl flex flex-col gap-3.5 select-none animate-in fade-in duration-200">
-      <div className="flex items-center gap-2">
-        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-600/10 text-violet-400 border border-violet-500/10">
-          <Sparkles className="h-3.5 w-3.5" />
-        </div>
-        <span className="text-xs font-bold text-zinc-200">Boost with AI</span>
-      </div>
-      <p className="text-[11px] text-zinc-500 leading-relaxed">
-        AI-powered replies, tag insights, and tools that save hours.
-      </p>
-      <button className="w-full py-2 px-3 text-[11px] font-bold text-white bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 rounded-xl shadow-[0_4px_16px_rgba(99,102,241,0.22)] border border-violet-500/25 transition-all duration-300 cursor-pointer">
-        Upgrade to Pro
-      </button>
-    </div>
-  );
-}
 
 function ProfileCardButton({
   isAuthenticated,

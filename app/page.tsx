@@ -39,7 +39,7 @@ export default async function HomePage({
   const initialMessages = mapMessagesForChat(chat?.messages);
 
   return (
-    <div className="bg-slate-950">
+    <div className="bg-slate-950 h-svh overflow-hidden">
     <ChatSidebarLayout
       activeChatId={id}
       chats={chats}
