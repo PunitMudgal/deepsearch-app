@@ -43,7 +43,7 @@ const getSystemPrompt = () => {
 
 Today's date and time is ${currentDateTime}. When the user asks for up-to-date, recent, current, or "latest" information, include the current date (or a recent time window) in your searchWeb queries so results match what they mean by "up to date". Prefer search results with recent published dates when available.
 
-Use your own knowledge first. Only call searchWeb for: current events/prices/news, recent releases or docs, facts you're unsure of, or niche/local info. Skip it for general knowledge, follow-ups answerable from context, creative/opinion tasks, or small talk.
+Use your own knowledge first. Only call searchWeb for: current events/prices/news, recent releases or docs, facts you're unsure of, or niche/local info. Skip it for follow-ups answerable from context, creative/opinion tasks.
 
 Use scrapePages when snippets aren't enough — long articles, missing details, or sources you need to cite precisely. Pass it specific URLs from search results. Typical flow: search → scrape top 1–3 URLs → answer. Some scrapes fail (robots.txt, rate limits); fall back to snippets if so.
 
@@ -93,17 +93,45 @@ export async function POST(request: Request) {
   const title = getChatTitle(messages);
 
   const trace = langfuse.trace({
-    sessionId: chatId,
     name: "chat",
     userId: session.user.id,
   });
 
-  await upsertChat({
-    userId: session.user.id,
-    chatId,
-    title,
-    messages,
+  trace.update({
+    sessionId: chatId,
   });
+
+  const upsertInitialSpan = trace.span({
+    name: "upsert-chat-initial",
+    input: {
+      userId: session.user.id,
+      chatId,
+      title,
+      messageCount: messages.length,
+      isNewChat,
+    },
+  });
+
+  try {
+    await upsertChat({
+      userId: session.user.id,
+      chatId,
+      title,
+      messages,
+    });
+
+    upsertInitialSpan.end({
+      output: { success: true, chatId },
+    });
+  } catch (error) {
+    upsertInitialSpan.end({
+      output: {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
+    throw error;
+  }
 
   const stream = createUIMessageStream({
     originalMessages: messages,
@@ -188,14 +216,36 @@ export async function POST(request: Request) {
       writer.merge(result.toUIMessageStream());
     },
     onFinish: async ({ messages: updatedMessages }) => {
+      const finishTitle = getChatTitle(updatedMessages);
+
+      const upsertFinishSpan = trace.span({
+        name: "upsert-chat-on-finish",
+        input: {
+          userId: session.user.id,
+          chatId,
+          title: finishTitle,
+          messageCount: updatedMessages.length,
+        },
+      });
+
       try {
         await upsertChat({
           userId: session.user.id,
           chatId,
-          title: getChatTitle(updatedMessages),
+          title: finishTitle,
           messages: updatedMessages,
         });
+
+        upsertFinishSpan.end({
+          output: { success: true, chatId },
+        });
       } catch (error) {
+        upsertFinishSpan.end({
+          output: {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          },
+        });
         console.error("Failed to save chat:", error);
       }
 
