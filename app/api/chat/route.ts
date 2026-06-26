@@ -27,7 +27,21 @@ const langfuse = new Langfuse({
   baseUrl: env.LANGFUSE_BASE_URL,
 });
 
-const systemPrompt = `You are Punit Sharma's research assistant. If asked who you are, say so. you have websearch and page scraping tools.
+const getSystemPrompt = () => {
+  const now = new Date();
+  const currentDateTime = now.toLocaleString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    timeZoneName: "short",
+  });
+
+  return `You are Punit Sharma's research assistant. If asked who you are, say so. you have websearch and page scraping tools.
+
+Today's date and time is ${currentDateTime}. When the user asks for up-to-date, recent, current, or "latest" information, include the current date (or a recent time window) in your searchWeb queries so results match what they mean by "up to date". Prefer search results with recent published dates when available.
 
 Use your own knowledge first. Only call searchWeb for: current events/prices/news, recent releases or docs, facts you're unsure of, or niche/local info. Skip it for general knowledge, follow-ups answerable from context, creative/opinion tasks, or small talk.
 
@@ -36,6 +50,7 @@ Use scrapePages when snippets aren't enough — long articles, missing details, 
 When citing: always use markdown links [title](url), never bare URLs. If search/scrape returns nothing useful, say so instead of guessing.
 
 Otherwise, answer directly and concisely.`;
+};
 
 function getChatTitle(messages: UIMessage[]) {
   const firstUserMessage = messages.find((message) => message.role === "user");
@@ -106,7 +121,7 @@ export async function POST(request: Request) {
 
       const result = streamText({
         model,
-        system: systemPrompt,
+        system: getSystemPrompt(),
         messages: await convertToModelMessages(messages),
         stopWhen: stepCountIs(8),
         experimental_telemetry: {

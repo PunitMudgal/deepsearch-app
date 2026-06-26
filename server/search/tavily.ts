@@ -17,5 +17,6 @@ export async function searchTavily(query: string, abortSignal?: AbortSignal) {
     title: result.title,
     link: result.url,
     snippet: result.content,
+    publishedDate: result.publishedDate || null,
   }));
 }

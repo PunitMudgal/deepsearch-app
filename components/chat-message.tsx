@@ -54,6 +54,7 @@ type SearchWebResult = {
   title: string;
   link: string;
   snippet: string;
+  publishedDate: string | null;
 };
 
 function SearchWebToolPart({ part }: { part: MessagePart }) {
