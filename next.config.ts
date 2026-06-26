@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: [
+    "@vercel/otel",
+    "langfuse-vercel",
+    "langfuse",
+    "langfuse-core",
+  ],
   images: {
     remotePatterns: [
       {

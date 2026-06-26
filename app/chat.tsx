@@ -107,7 +107,7 @@ export const ChatPage = ({
           <form onSubmit={handleSubmit} className="mx-auto min-w-2/3 p-4">
             <Field
               orientation="horizontal"
-              className="flex h-16 w-full gap-2 rounded-full bg-stone-900 p-1 px-5"
+              className="flex h-16 w-full gap-2 rounded-full bg-stone-900 p-1 px-5  "
             >
               <Button
                 variant="outline"

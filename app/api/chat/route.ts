@@ -107,6 +107,7 @@ export async function POST(request: Request) {
         system: systemPrompt,
         messages: await convertToModelMessages(messages),
         stopWhen: stepCountIs(8),
+        experimental_telemetry: { isEnabled: true },
         tools: {
           searchWeb: tool({
             description:
