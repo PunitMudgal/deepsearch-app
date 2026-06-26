@@ -3,7 +3,7 @@ import { and, count, eq, gte } from "drizzle-orm";
 import { db } from "@/server/db";
 import { requests, users } from "@/server/db/schema";
 
-export const DAILY_REQUEST_LIMIT = 10;
+export const DAILY_REQUEST_LIMIT = parseInt(process.env.DAILY_REQUEST_LIMIT ?? "6");
 
 function getStartOfToday() {
   const startOfDay = new Date();
