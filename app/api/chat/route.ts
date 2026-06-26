@@ -8,7 +8,9 @@ import {
   streamText,
   tool,
 } from "ai";
+import { Langfuse } from "langfuse";
 import { z } from "zod";
+import { env } from "@/env";
 import { model } from "@/models";
 import { auth } from "@/server/auth";
 import { upsertChat } from "@/server/chat";
@@ -16,6 +18,13 @@ import { checkAndRecordRequest } from "@/server/rate-limit";
 import { searchTavily } from "@/server/search/tavily";
 
 export const maxDuration = 60;
+
+const langfuse = new Langfuse({
+  environment: env.NODE_ENV,
+  secretKey: env.LANGFUSE_SECRET_KEY,
+  publicKey: env.LANGFUSE_PUBLIC_KEY,
+  baseUrl: env.LANGFUSE_BASE_URL,
+});
 
 const systemPrompt = `You are a helpful research assistant built for Punit Sharma. If asked who you are, say you are Punit Sharma's assistant.
 
@@ -81,6 +90,12 @@ export async function POST(request: Request) {
   const { messages, chatId, isNewChat } = body;
   const title = getChatTitle(messages);
 
+  const trace = langfuse.trace({
+    sessionId: chatId,
+    name: "chat",
+    userId: session.user.id,
+  });
+
   await upsertChat({
     userId: session.user.id,
     chatId,
@@ -107,7 +122,13 @@ export async function POST(request: Request) {
         system: systemPrompt,
         messages: await convertToModelMessages(messages),
         stopWhen: stepCountIs(8),
-        experimental_telemetry: { isEnabled: true },
+        experimental_telemetry: {
+          isEnabled: true,
+          functionId: "agent",
+          metadata: {
+            langfuseTraceId: trace.id,
+          },
+        },
         tools: {
           searchWeb: tool({
             description:
@@ -139,6 +160,8 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error("Failed to save chat:", error);
       }
+
+      await langfuse.flushAsync();
     },
     onError: (error) => {
       console.error(error);

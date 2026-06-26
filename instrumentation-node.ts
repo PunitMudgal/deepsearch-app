@@ -1,14 +1,15 @@
-import { registerOTel } from "@vercel/otel";
 import { LangfuseExporter } from "langfuse-vercel";
+import { registerOTel } from "@vercel/otel";
+import { env } from "@/env";
 
 export function registerOTelInstrumentation() {
   registerOTel({
-    serviceName: "deepsearch-ts",
+    serviceName: "langfuse-vercel-ai-nextjs-example",
     traceExporter: new LangfuseExporter({
-      secretKey: process.env.LANGFUSE_SECRET_KEY,
-      publicKey: process.env.LANGFUSE_PUBLIC_KEY,
-      baseUrl:
-        process.env.LANGFUSE_BASE_URL,
+      environment: env.NODE_ENV,
+      secretKey: env.LANGFUSE_SECRET_KEY,
+      publicKey: env.LANGFUSE_PUBLIC_KEY,
+      baseUrl: env.LANGFUSE_BASE_URL,
     }),
   });
 }
