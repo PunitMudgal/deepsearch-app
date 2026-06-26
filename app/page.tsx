@@ -45,6 +45,8 @@ export default async function HomePage({
       chats={chats}
       isAuthenticated={isAuthenticated}
       userImage={session?.user?.image}
+      userName={session?.user?.name}
+      userEmail={session?.user?.email}
     >
       <ChatPage
         key={chatId}
