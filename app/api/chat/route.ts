@@ -74,17 +74,16 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as {
     messages: UIMessage[];
-    chatId?: string;
+    chatId: string;
+    isNewChat: boolean;
   };
 
-  const { messages, chatId } = body;
-  const isNewChat = !chatId;
-  const resolvedChatId = chatId ?? crypto.randomUUID();
+  const { messages, chatId, isNewChat } = body;
   const title = getChatTitle(messages);
 
   await upsertChat({
     userId: session.user.id,
-    chatId: resolvedChatId,
+    chatId,
     title,
     messages,
   });
@@ -98,7 +97,7 @@ export async function POST(request: Request) {
           type: "data-newChatCreated",
           data: {
             type: "NEW_CHAT_CREATED",
-            chatId: resolvedChatId,
+            chatId,
           },
         });
       }
@@ -132,7 +131,7 @@ export async function POST(request: Request) {
       try {
         await upsertChat({
           userId: session.user.id,
-          chatId: resolvedChatId,
+          chatId,
           title: getChatTitle(updatedMessages),
           messages: updatedMessages,
         });

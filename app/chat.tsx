@@ -16,7 +16,8 @@ import {Field} from "@/components/ui/field"
 interface ChatProps {
   userName: string;
   isAuthenticated: boolean;
-  chatId: string | undefined;
+  chatId: string;
+  isNewChat: boolean;
   initialMessages: UIMessage[];
 }
 
@@ -24,6 +25,7 @@ export const ChatPage = ({
   userName,
   isAuthenticated,
   chatId,
+  isNewChat,
   initialMessages,
 }: ChatProps) => {
   const router = useRouter();
@@ -34,6 +36,7 @@ export const ChatPage = ({
       api: "/api/chat",
       body: {
         chatId,
+        isNewChat,
       },
     }),
     onData: (dataPart) => {

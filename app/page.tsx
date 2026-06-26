@@ -24,6 +24,9 @@ export default async function HomePage({
   const userName = session?.user?.name ?? "Guest";
   const isAuthenticated = !!session?.user;
 
+  const chatId = id ?? crypto.randomUUID();
+  const isNewChat = !id;
+
   const chats = session?.user
     ? await getChats({ userId: session.user.id })
     : [];
@@ -44,12 +47,13 @@ export default async function HomePage({
       userImage={session?.user?.image}
     >
       <ChatPage
-        key={id ?? "new"}
+        key={chatId}
         userName={userName}
         isAuthenticated={isAuthenticated}
-        chatId={id}
-          initialMessages={initialMessages}
-        />
+        chatId={chatId}
+        isNewChat={isNewChat}
+        initialMessages={initialMessages}
+      />
       </ChatSidebarLayout>
     </div>
   );
