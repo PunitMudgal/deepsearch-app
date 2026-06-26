@@ -2,7 +2,7 @@ import { type UIMessage } from "ai";
 import { StickToBottom } from "use-stick-to-bottom";
 import { ChatMessage } from "@/components/chat-message";
 import { ErrorMessage } from "@/components/error-message";
-import React from "react";
+import { ScrollToBottomButton } from "@/components/scroll-to-bottom-button";
 
 interface ChatMessagesProps {
   messages: UIMessage[];
@@ -13,12 +13,13 @@ interface ChatMessagesProps {
 export function ChatMessages({ messages, userName, error }: ChatMessagesProps) {
   return (
     <StickToBottom
-      className="relative flex min-h-0 w-full flex-1 flex-col [&>div]:scrollbar-thin [&>div]:scrollbar-track-transparent [&>div]:scrollbar-thumb-zinc-800 hover:[&>div]:scrollbar-thumb-zinc-700 overflow-hidden"
+      className="relative h-full min-h-0 w-full [&>div]:h-full [&>div]:min-h-0"
       resize="smooth"
       initial="smooth"
     >
       <StickToBottom.Content
-        className="mx-auto w-full max-w-[800px] p-4 flex flex-col gap-6"
+        scrollClassName="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-zinc-800 hover:scrollbar-thumb-zinc-700"
+        className="mx-auto flex w-full max-w-[800px] flex-col gap-6 p-4"
         role="log"
         aria-label="Chat messages"
       >
@@ -32,9 +33,11 @@ export function ChatMessages({ messages, userName, error }: ChatMessagesProps) {
             userName={userName}
           />
         ))}
-        {/* Add some padding at the bottom of the list for visual balance before the input */}
-        <div className="h-4 w-full shrink-0" />
+
+        <div className="h-2 w-full shrink-0" />
       </StickToBottom.Content>
+
+      <ScrollToBottomButton />
     </StickToBottom>
   );
 }

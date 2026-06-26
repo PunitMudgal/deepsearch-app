@@ -77,7 +77,7 @@ export const ChatPage = ({
 
   return (
     <>
-      <div className="flex flex-1 flex-col w-full h-full bg-[#0b0b0d] overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col w-full h-full overflow-hidden bg-[#0b0b0d]">
         {messages.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-4 w-full h-full">
             <ChatEmptyState userName={userName} />
@@ -92,15 +92,15 @@ export const ChatPage = ({
             </div>
           </div>
         ) : (
-          <div className="flex flex-1 flex-col h-full overflow-hidden relative">
-            <div className="flex-1 min-h-0 w-full overflow-hidden">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="min-h-0 flex-1 w-full">
               <ChatMessages
                 messages={messages}
                 userName={userName}
                 error={error}
               />
             </div>
-            <div className="shrink-0 w-full bg-gradient-to-t from-[#0b0b0d] via-[#0b0b0d]/95 to-transparent pt-6 pb-4 px-4 relative z-10">
+            <div className="relative z-10 w-full shrink-0 border-t border-zinc-800/50 bg-[#0b0b0d] px-4 pb-4 pt-2">
               <ChatInput
                 input={input}
                 handleInputChange={handleInputChange}
