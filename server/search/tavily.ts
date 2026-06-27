@@ -10,7 +10,7 @@ export async function searchTavily(query: string, abortSignal?: AbortSignal) {
   }
 
   const response = await tvly.search(query, {
-    maxResults: 10,
+    maxResults: env.SEARCH_RESULTS_COUNT,
   });
 
   return response.results.map((result) => ({
