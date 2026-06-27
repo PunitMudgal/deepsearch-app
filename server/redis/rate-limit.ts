@@ -113,6 +113,6 @@ export async function checkRateLimit({
 export const GLOBAL_LLM_RATE_LIMIT_CONFIG: RateLimitConfig = {
   maxRequests: 1,
   maxRetries: 3,
-  windowMs: 5_000,
+  windowMs: 20_000, // 20 seconds
   keyPrefix: "global",
 };
