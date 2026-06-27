@@ -1,9 +1,10 @@
 import type { UIMessage } from "ai";
 import { evalite } from "evalite";
 import { askDeepSearch } from "@/server/deep-search";
+import { Factuality } from "@/evals/scorers/factuality";
 
 evalite("Deep Search Eval", {
-  data: async (): Promise<{ input: UIMessage[] }[]> => {
+  data: async (): Promise<{ input: UIMessage[]; expected: string }[]> => {
     return [
       {
         input: [
@@ -18,6 +19,7 @@ evalite("Deep Search Eval", {
             ],
           },
         ],
+        expected: "The current TypeScript version is 5.8",
       },
       {
         input: [
@@ -27,11 +29,28 @@ evalite("Deep Search Eval", {
             parts: [
               {
                 type: "text",
-                text: "What are the main features of Next.js 16?",
+                text: "What are the main features of Next.js 15?",
               },
             ],
           },
         ],
+        expected: `
+@next/codemod CLI: Easily upgrade to the latest Next.js and React versions.
+Async Request APIs (Breaking): Incremental step towards a simplified rendering and caching model.
+Caching Semantics (Breaking): fetch requests, GET Route Handlers, and client navigations are no longer cached by default.
+React 19 Support: Support for React 19, React Compiler (Experimental), and hydration error improvements.
+Turbopack Dev (Stable): Performance and stability improvements.
+Static Indicator: New visual indicator shows static routes during development.
+unstable_after API (Experimental): Execute code after a response finishes streaming.
+instrumentation.js API (Stable): New API for server lifecycle observability.
+Enhanced Forms (next/form): Enhance HTML forms with client-side navigation.
+next.config: TypeScript support for next.config.ts.
+Self-hosting Improvements: More control over Cache-Control headers.
+Server Actions Security: Unguessable endpoints and removal of unused actions.
+Bundling External Packages (Stable): New config options for App and Pages Router.
+ESLint 9 Support: Added support for ESLint 9.
+Development and Build Performance: Improved build times and Faster Fast Refresh.
+`,
       },
     ];
   },
@@ -50,5 +69,6 @@ evalite("Deep Search Eval", {
         return containsLinks ? 1 : 0;
       },
     },
+    Factuality,
   ],
 });
