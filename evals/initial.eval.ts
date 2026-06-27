@@ -1,4 +1,5 @@
 import { evalite } from "evalite";
+import { AnswerRelevancy } from "@/evals/scorers/answer-relevancy";
 import { Factuality } from "@/evals/scorers/factuality";
 import { resolveEvalData } from "@/evals/resolve-data";
 import { askDeepSearch } from "@/server/deep-search";
@@ -21,5 +22,6 @@ evalite("Deep Search Eval", {
       },
     },
     Factuality,
+    AnswerRelevancy,
   ],
 });

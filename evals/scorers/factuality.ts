@@ -3,18 +3,8 @@ import { generateObject } from "ai";
 import { createScorer } from "evalite";
 import { z } from "zod";
 
+import { getQuestionFromMessages } from "@/evals/utils";
 import { factualityModel } from "@/models";
-
-function getQuestionFromMessages(messages: UIMessage[]): string {
-  const userMessage = messages.find((message) => message.role === "user");
-  const textPart = userMessage?.parts.find((part) => part.type === "text");
-
-  if (!textPart || textPart.type !== "text") {
-    return "";
-  }
-
-  return textPart.text;
-}
 
 export async function checkFactuality(opts: {
   question: string;
