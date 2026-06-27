@@ -10,6 +10,11 @@ import { auth } from "@/server/auth";
 import { upsertChat } from "@/server/chat";
 import { streamFromDeepSearch } from "@/server/deep-search";
 import { checkAndRecordRequest } from "@/server/rate-limit";
+import {
+  checkRateLimit,
+  GLOBAL_LLM_RATE_LIMIT_CONFIG,
+  recordRateLimit,
+} from "@/server/redis/rate-limit";
 
 export const maxDuration = 60;
 
@@ -100,6 +105,21 @@ export async function POST(request: Request) {
     });
     throw error;
   }
+
+  const rateLimitCheck = await checkRateLimit(GLOBAL_LLM_RATE_LIMIT_CONFIG);
+
+  if (!rateLimitCheck.allowed) {
+    console.log("Rate limit exceeded, waiting...");
+    const isAllowed = await rateLimitCheck.retry();
+
+    if (!isAllowed) {
+      return new Response("Rate limit exceeded", {
+        status: 429,
+      });
+    }
+  }
+
+  await recordRateLimit(GLOBAL_LLM_RATE_LIMIT_CONFIG);
 
   const stream = createUIMessageStream({
     originalMessages: messages,
