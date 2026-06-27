@@ -1,12 +1,42 @@
-import { Levenshtein } from "autoevals";
+import type { UIMessage } from "ai";
 import { evalite } from "evalite";
+import { askDeepSearch } from "@/server/deep-search";
 
-evalite("My Eval", {
-  data: async () => {
-    return [{ input: "Hello", expected: "Hello World!" }];
+evalite("Deep Search Eval", {
+  data: async (): Promise<{ input: UIMessage[] }[]> => {
+    return [
+      {
+        input: [
+          {
+            id: "1",
+            role: "user",
+            parts: [
+              {
+                type: "text",
+                text: "What is the latest version of TypeScript?",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        input: [
+          {
+            id: "2",
+            role: "user",
+            parts: [
+              {
+                type: "text",
+                text: "What are the main features of Next.js 16?",
+              },
+            ],
+          },
+        ],
+      },
+    ];
   },
   task: async (input) => {
-    return input + " World!";
+    return askDeepSearch(input);
   },
-  scorers: [Levenshtein],
+  scorers: [],
 });
