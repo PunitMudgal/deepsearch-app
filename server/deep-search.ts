@@ -1,17 +1,8 @@
-import {
-  convertToModelMessages,
-  stepCountIs,
-  streamText,
-  tool,
-  type StreamTextOnFinishCallback,
-  type TelemetrySettings,
-  type ToolSet,
-  type UIMessage,
-} from "ai";
-import { z } from "zod";
-import { model } from "@/models";
-import { scrapePages } from "@/server/search/scrape-pages";
-import { searchTavily } from "@/server/search/tavily";
+import { streamText, type TelemetrySettings, type UIMessage } from "ai";
+
+import { runAgentLoop } from "@/server/run-agent-loop";
+
+type DeepSearchStreamResult = ReturnType<typeof streamText>;
 
 export function getSystemPrompt() {
   const now = new Date();
@@ -38,77 +29,21 @@ When citing: always use markdown links [title](url), never bare URLs. If search/
 Otherwise, answer directly and concisely.`;
 }
 
-const deepSearchTools = {
-  searchWeb: tool({
-    description:
-      "Search the web for up-to-date or hard-to-verify information. Use only when the answer needs current data or you lack reliable knowledge — not for every message.",
-    inputSchema: z.object({
-      query: z
-        .string()
-        .describe("A focused search query for the specific information you need"),
-    }),
-    execute: async ({ query }, { abortSignal }) => {
-      return searchTavily(query, abortSignal);
-    },
-  }),
-  scrapePages: tool({
-    description:
-      "Fetch the full text of web pages as markdown. Use after searchWeb when snippets are insufficient and you need complete page content from specific URLs.",
-    inputSchema: z.object({
-      urls: z
-        .array(z.string())
-        .min(1)
-        .max(5)
-        .describe("URLs to scrape for full page content"),
-    }),
-    execute: async ({ urls }, { abortSignal }) => {
-      if (abortSignal?.aborted) {
-        throw abortSignal.reason ?? new Error("Aborted");
-      }
-
-      const result = await scrapePages(urls);
-
-      if (result.success) {
-        return {
-          pages: result.results.map(({ url, result: crawlResult }) => ({
-            url,
-            markdown: crawlResult.data,
-          })),
-        };
-      }
-
-      return {
-        error: result.error,
-        pages: result.results.map(({ url, result: crawlResult }) =>
-          crawlResult.success
-            ? { url, markdown: crawlResult.data }
-            : { url, error: crawlResult.error },
-        ),
-      };
-    },
-  }),
-} satisfies ToolSet;
-
 export async function streamFromDeepSearch(opts: {
   messages: UIMessage[];
-  onFinish?: StreamTextOnFinishCallback<typeof deepSearchTools>;
+  onFinish?: Parameters<typeof streamText>[0]["onFinish"];
   telemetry: TelemetrySettings;
-}) {
-  return streamText({
-    model,
-    system: getSystemPrompt(),
-    messages: await convertToModelMessages(opts.messages),
-    stopWhen: stepCountIs(8),
-    tools: deepSearchTools,
-    onFinish: opts.onFinish,
-    experimental_telemetry: opts.telemetry,
+}): Promise<DeepSearchStreamResult> {
+  void opts.onFinish;
+
+  return runAgentLoop(opts.messages, {
+    telemetry: opts.telemetry,
   });
 }
 
 export async function askDeepSearch(messages: UIMessage[]) {
   const result = await streamFromDeepSearch({
     messages,
-    onFinish: () => {},
     telemetry: {
       isEnabled: false,
     },
@@ -116,5 +51,5 @@ export async function askDeepSearch(messages: UIMessage[]) {
 
   await result.consumeStream();
 
-  return result.text;
+  return await result.text;
 }

@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai";
+import { streamText, type TelemetrySettings } from "ai";
 
 import { scrapePages } from "@/server/search/scrape-pages";
 import { searchTavily } from "@/server/search/tavily";
@@ -9,6 +10,8 @@ import {
   type QueryResult,
   type ScrapeResult,
 } from "@/server/system-context";
+
+type AgentLoopResult = ReturnType<typeof streamText>;
 
 async function searchWeb(query: string, abortSignal?: AbortSignal) {
   if (abortSignal?.aborted) {
@@ -49,8 +52,11 @@ async function scrapeUrls(urls: string[], abortSignal?: AbortSignal) {
 
 export async function runAgentLoop(
   messages: UIMessage[],
-  abortSignal?: AbortSignal,
-) {
+  opts: {
+    abortSignal?: AbortSignal;
+    telemetry?: TelemetrySettings;
+  } = {},
+): Promise<AgentLoopResult> {
   const ctx = SystemContext.fromMessages(messages);
 
   while (!ctx.shouldStop()) {
@@ -62,7 +68,7 @@ export async function runAgentLoop(
         continue;
       }
 
-      const results = await searchWeb(nextAction.query, abortSignal);
+      const results = await searchWeb(nextAction.query, opts.abortSignal);
       const queryResult: QueryResult = {
         query: nextAction.query,
         results,
@@ -77,16 +83,16 @@ export async function runAgentLoop(
 
       const scrapes: ScrapeResult[] = await scrapeUrls(
         nextAction.urls,
-        abortSignal,
+        opts.abortSignal,
       );
 
       ctx.reportScrapes(scrapes);
     } else if (nextAction.type === "answer") {
-      return answerQuestion(ctx);
+      return answerQuestion(ctx, { telemetry: opts.telemetry });
     }
 
     ctx.incrementStep();
   }
 
-  return answerQuestion(ctx, { isFinal: true });
+  return answerQuestion(ctx, { isFinal: true, telemetry: opts.telemetry });
 }
