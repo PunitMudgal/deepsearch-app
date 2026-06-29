@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { DefaultChatTransport } from "ai";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,6 +11,7 @@ import { ChatInput } from "@/components/chat-input";
 import { ChatEmptyState } from "@/components/chat-empty-state";
 import { ChatMessages } from "@/components/chat-messages";
 import { CHAT_PARTICLE_COLORS } from "@/components/particles";
+import type { StoredUIMessage } from "@/server/chat";
 
 const Particles = dynamic(
   () => import("@/components/particles").then((mod) => mod.Particles),
@@ -22,7 +23,7 @@ interface ChatProps {
   isAuthenticated: boolean;
   chatId: string;
   isNewChat: boolean;
-  initialMessages: UIMessage[];
+  initialMessages: StoredUIMessage[];
 }
 
 export const ChatPage = ({

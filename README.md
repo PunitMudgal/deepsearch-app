@@ -16,7 +16,7 @@ A research assistant built with Next.js that combines an LLM agent with web sear
 
 - **Streaming responses** — Real-time token streaming with visible tool calls (e.g. search in progress).
 - **Markdown rendering** — Rich formatting for lists, code blocks, and clickable source links.
-- **Chat persistence** — Conversations saved to PostgreSQL (Drizzle ORM). Resume any past chat from the sidebar.
+- **Chat persistence** — Conversations saved to PostgreSQL (Drizzle ORM). Message text and reasoning-step annotations are persisted so chats survive page refreshes.
 - **New chat flow** — Stable chat IDs, URL updates after the first message, and clean state resets without interrupting active streams.
 - **Auto-scroll** — Messages stick to the bottom while streaming; a scroll-to-bottom button appears when you scroll up.
 - **Copy messages** — One-click copy on user and assistant messages.

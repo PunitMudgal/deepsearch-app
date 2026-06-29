@@ -34,6 +34,7 @@ export async function answerQuestion(
     isFinal?: boolean;
     langfuseTraceId: string | undefined;
     functionId: string;
+    onFinish?: Parameters<typeof streamText>[0]["onFinish"];
   },
 ): Promise<AnswerQuestionResult> {
   const finalNote = opts.isFinal
@@ -57,5 +58,6 @@ export async function answerQuestion(
       langfuseTraceId: opts.langfuseTraceId,
       functionId: opts.functionId,
     }),
+    onFinish: opts.onFinish,
   });
 }

@@ -11,6 +11,7 @@ import {
     boolean,
   } from "drizzle-orm/pg-core";
 import type { UIMessage } from "ai";
+import type { OurMessageAnnotation } from "@/lib/agent-annotations";
 import { AdapterAccount } from "next-auth/adapters";
 import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
@@ -96,6 +97,7 @@ export const messages = createTable(
       .references(() => chats.id, { onDelete: "cascade" }),
     role: varchar("role", { length: 255 }).notNull(),
     parts: jsonb("parts").notNull().$type<UIMessage["parts"]>(),
+    annotations: jsonb("annotations").$type<OurMessageAnnotation[]>(),
     order: integer("order").notNull(),
   },
   (message) => ({

@@ -1,15 +1,18 @@
 import type { UIMessage } from "ai";
 import { auth } from "@/server/auth";
-import { getChat, getChats } from "@/server/chat";
+import { getChat, getChats, type StoredUIMessage } from "@/server/chat";
 import { ChatPage } from "@/app/chat";
 import { ChatSidebarLayout } from "@/components/chat-sidebar-layout";
 
-function mapMessagesForChat(dbMessages: UIMessage[] | undefined): UIMessage[] {
+function mapMessagesForChat(
+  dbMessages: StoredUIMessage[] | undefined,
+): StoredUIMessage[] {
   return (
     dbMessages?.map((msg) => ({
       id: msg.id,
       role: msg.role as "user" | "assistant",
       parts: msg.parts as UIMessage["parts"],
+      annotations: msg.annotations,
     })) ?? []
   );
 }

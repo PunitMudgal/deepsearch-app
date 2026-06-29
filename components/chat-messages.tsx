@@ -1,11 +1,11 @@
-import { type UIMessage } from "ai";
+import type { StoredUIMessage } from "@/server/chat";
 import { StickToBottom } from "use-stick-to-bottom";
 import { ChatMessage } from "@/components/chat-message";
 import { ErrorMessage } from "@/components/error-message";
 import { ScrollToBottomButton } from "@/components/scroll-to-bottom-button";
 
 interface ChatMessagesProps {
-  messages: UIMessage[];
+  messages: StoredUIMessage[];
   userName: string;
   error?: Error;
 }
@@ -31,6 +31,7 @@ export function ChatMessages({ messages, userName, error }: ChatMessagesProps) {
             parts={message.parts}
             role={message.role}
             userName={userName}
+            annotations={message.annotations}
           />
         ))}
 

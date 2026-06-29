@@ -1,14 +1,19 @@
 import type { UIMessage } from "ai";
 import { and, asc, desc, eq } from "drizzle-orm";
 
+import type { OurMessageAnnotation } from "@/lib/agent-annotations";
 import { db } from "@/server/db";
 import { chats, messages } from "@/server/db/schema";
+
+export type StoredUIMessage = UIMessage & {
+  annotations?: OurMessageAnnotation[];
+};
 
 export const upsertChat = async (opts: {
   userId: string;
   chatId: string;
   title: string;
-  messages: UIMessage[];
+  messages: StoredUIMessage[];
 }) => {
   const { userId, chatId, title, messages: chatMessages } = opts;
 
@@ -45,6 +50,7 @@ export const upsertChat = async (opts: {
           chatId,
           role: message.role,
           parts: message.parts,
+          annotations: message.annotations,
           order: index,
         })),
       );
@@ -72,10 +78,11 @@ export const getChat = async (opts: { userId: string; chatId: string }) => {
   return {
     ...chat,
     messages: chatMessages.map(
-      (message): UIMessage => ({
+      (message): StoredUIMessage => ({
         id: message.id,
         role: message.role as UIMessage["role"],
         parts: message.parts,
+        annotations: message.annotations ?? undefined,
       }),
     ),
   };

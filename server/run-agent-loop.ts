@@ -57,6 +57,7 @@ export async function runAgentLoop(
     abortSignal?: AbortSignal;
     langfuseTraceId?: string;
     writeMessageAnnotation?: WriteMessageAnnotation;
+    onFinish?: Parameters<typeof streamText>[0]["onFinish"];
   } = {},
 ): Promise<AgentLoopResult> {
   const ctx = SystemContext.fromMessages(messages);
@@ -105,6 +106,7 @@ export async function runAgentLoop(
       return await answerQuestion(ctx, {
         langfuseTraceId: opts.langfuseTraceId,
         functionId: "agent-answer-question",
+        onFinish: opts.onFinish,
       });
     }
 
@@ -116,5 +118,6 @@ export async function runAgentLoop(
     isFinal: true,
     langfuseTraceId: opts.langfuseTraceId,
     functionId: "agent-answer-question-final",
+    onFinish: opts.onFinish,
   });
 }

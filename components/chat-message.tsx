@@ -8,6 +8,7 @@ import {
 import { Loader2, Search } from "lucide-react";
 import { MessageCopyButton } from "@/components/message-copy-button";
 import { ReasoningSteps } from "@/components/reasoning-steps";
+import type { OurMessageAnnotation } from "@/lib/agent-annotations";
 import { getNewActionAnnotations } from "@/lib/agent-annotations";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ interface ChatMessageProps {
   parts: MessagePart[];
   role: string;
   userName: string;
+  annotations?: OurMessageAnnotation[];
 }
 
 function getMessageCopyText(parts: MessagePart[]): string {
@@ -150,11 +152,18 @@ function MessagePartContent({ part }: { part: MessagePart }) {
   return null;
 }
 
-export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
+export const ChatMessage = ({
+  parts,
+  role,
+  userName,
+  annotations,
+}: ChatMessageProps) => {
   const isAI = role === "assistant";
   const copyText = getMessageCopyText(parts);
   const hasCopyableText = copyText.trim().length > 0;
-  const actionAnnotations = isAI ? getNewActionAnnotations(parts) : [];
+  const actionAnnotations = isAI
+    ? (annotations ?? getNewActionAnnotations(parts))
+    : [];
 
   return (
     <article

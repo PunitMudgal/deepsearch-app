@@ -36,11 +36,10 @@ export async function streamFromDeepSearch(opts: {
   langfuseTraceId?: string;
   writeMessageAnnotation?: WriteMessageAnnotation;
 }): Promise<DeepSearchStreamResult> {
-  void opts.onFinish;
-
   return runAgentLoop(opts.messages, {
     langfuseTraceId: opts.langfuseTraceId,
     writeMessageAnnotation: opts.writeMessageAnnotation,
+    onFinish: opts.onFinish,
   });
 }
 
