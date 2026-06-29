@@ -1,5 +1,6 @@
 import { streamText, type TelemetrySettings, type UIMessage } from "ai";
 
+import type { WriteMessageAnnotation } from "@/lib/agent-annotations";
 import { runAgentLoop } from "@/server/run-agent-loop";
 
 type DeepSearchStreamResult = ReturnType<typeof streamText>;
@@ -33,11 +34,13 @@ export async function streamFromDeepSearch(opts: {
   messages: UIMessage[];
   onFinish?: Parameters<typeof streamText>[0]["onFinish"];
   telemetry: TelemetrySettings;
+  writeMessageAnnotation?: WriteMessageAnnotation;
 }): Promise<DeepSearchStreamResult> {
   void opts.onFinish;
 
   return runAgentLoop(opts.messages, {
     telemetry: opts.telemetry,
+    writeMessageAnnotation: opts.writeMessageAnnotation,
   });
 }
 

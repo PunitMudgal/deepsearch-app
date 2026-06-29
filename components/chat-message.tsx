@@ -7,6 +7,8 @@ import {
 } from "ai";
 import { Loader2, Search } from "lucide-react";
 import { MessageCopyButton } from "@/components/message-copy-button";
+import { ReasoningSteps } from "@/components/reasoning-steps";
+import { getNewActionAnnotations } from "@/lib/agent-annotations";
 import { cn } from "@/lib/utils";
 
 export type MessagePart = NonNullable<UIMessage["parts"]>[number];
@@ -115,6 +117,10 @@ function SearchWebToolPart({ part }: { part: MessagePart }) {
 }
 
 function MessagePartContent({ part }: { part: MessagePart }) {
+  if (part.type === "data-newAction") {
+    return null;
+  }
+
   if (isTextUIPart(part)) {
     if (!part.text) {
       return null;
@@ -148,6 +154,7 @@ export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
   const isAI = role === "assistant";
   const copyText = getMessageCopyText(parts);
   const hasCopyableText = copyText.trim().length > 0;
+  const actionAnnotations = isAI ? getNewActionAnnotations(parts) : [];
 
   return (
     <article
@@ -167,6 +174,8 @@ export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
         <p className="mb-2 text-xs font-medium text-zinc-500">
           {isAI ? "DeepSearch" : userName}
         </p>
+
+        {isAI ? <ReasoningSteps annotations={actionAnnotations} /> : null}
 
         <div className="space-y-1">
           {parts.map((part, index) => (

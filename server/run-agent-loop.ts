@@ -1,6 +1,7 @@
 import type { UIMessage } from "ai";
 import { streamText, type TelemetrySettings } from "ai";
 
+import type { WriteMessageAnnotation } from "@/lib/agent-annotations";
 import { scrapePages } from "@/server/search/scrape-pages";
 import { searchTavily } from "@/server/search/tavily";
 import { answerQuestion } from "@/server/answer-question";
@@ -55,12 +56,19 @@ export async function runAgentLoop(
   opts: {
     abortSignal?: AbortSignal;
     telemetry?: TelemetrySettings;
+    writeMessageAnnotation?: WriteMessageAnnotation;
   } = {},
 ): Promise<AgentLoopResult> {
   const ctx = SystemContext.fromMessages(messages);
+  const writeMessageAnnotation = opts.writeMessageAnnotation ?? (() => {});
 
   while (!ctx.shouldStop()) {
     const nextAction = await getNextAction(ctx);
+
+    writeMessageAnnotation({
+      type: "NEW_ACTION",
+      action: nextAction,
+    });
 
     if (nextAction.type === "search") {
       if (!nextAction.query) {

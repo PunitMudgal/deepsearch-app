@@ -10,6 +10,7 @@ import { auth } from "@/server/auth";
 import { upsertChat } from "@/server/chat";
 import { streamFromDeepSearch } from "@/server/deep-search";
 import { checkAndRecordRequest } from "@/server/rate-limit";
+import type { OurMessageAnnotation } from "@/lib/agent-annotations";
 import {
   checkRateLimit,
   GLOBAL_LLM_RATE_LIMIT_CONFIG,
@@ -137,6 +138,12 @@ export async function POST(request: Request) {
 
       const result = await streamFromDeepSearch({
         messages,
+        writeMessageAnnotation: (annotation: OurMessageAnnotation) => {
+          writer.write({
+            type: "data-newAction",
+            data: annotation,
+          });
+        },
         telemetry: {
           isEnabled: true,
           functionId: "agent",

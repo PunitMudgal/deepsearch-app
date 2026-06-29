@@ -5,23 +5,13 @@ import { model } from "@/models";
 import { getSystemPrompt } from "@/server/deep-search";
 import type { SystemContext } from "@/server/system-context";
 
-export interface SearchAction {
-  type: "search";
-  query: string;
-}
-
-export interface ScrapeAction {
-  type: "scrape";
-  urls: string[];
-}
-
-export interface AnswerAction {
-  type: "answer";
-}
-
-export type Action = SearchAction | ScrapeAction | AnswerAction;
-
 export const actionSchema = z.object({
+  title: z
+    .string()
+    .describe(
+      "The title of the action, to be displayed in the UI. Be extremely concise. 'Searching Saka's injury history', 'Checking HMRC industrial action', 'Comparing toaster ovens'",
+    ),
+  reasoning: z.string().describe("The reason you chose this step."),
   type: z
     .enum(["search", "scrape", "answer"])
     .describe(
@@ -40,6 +30,8 @@ export const actionSchema = z.object({
     .optional(),
 });
 
+export type Action = z.infer<typeof actionSchema>;
+
 export const getNextAction = async (context: SystemContext) => {
   const queryHistory = context.getQueryHistory();
   const scrapeHistory = context.getScrapeHistory();
@@ -55,6 +47,8 @@ You are deciding the next action in a research loop. Choose exactly one action:
 - search: Search the web when you need up-to-date information, facts you're unsure of, or more sources. Provide a focused query. Include the current date or a recent time window when the user asks for "latest" or "recent" information.
 - scrape: Scrape specific URLs when snippets are not enough and you need full page content to cite precisely. Pass URLs from prior search results. Typical flow: search → scrape top 1–3 URLs → answer.
 - answer: Stop the loop when you have enough information to answer the user's question. Prefer answering from gathered context when possible; do not guess if search/scrape returned nothing useful.
+
+For every action, provide a concise title for the UI and clear reasoning for why you chose this step.
 
 User question:
 ${context.getInitialQuestion()}
