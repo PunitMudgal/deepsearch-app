@@ -1,5 +1,7 @@
 import type { UIMessage } from "ai";
 
+import type { RequestHints } from "@/server/request-hints";
+
 type QueryResultSearchResult = {
   date: string;
   title: string;
@@ -38,13 +40,22 @@ export class SystemContext {
   private queryHistory: QueryResult[] = [];
   private scrapeHistory: ScrapeResult[] = [];
   private messages: UIMessage[];
+  private requestHints: RequestHints;
 
-  constructor(messages: UIMessage[]) {
+  constructor(messages: UIMessage[], requestHints: RequestHints = {}) {
     this.messages = messages;
+    this.requestHints = requestHints;
   }
 
-  static fromMessages(messages: UIMessage[]): SystemContext {
-    return new SystemContext(messages);
+  static fromMessages(
+    messages: UIMessage[],
+    requestHints: RequestHints = {},
+  ): SystemContext {
+    return new SystemContext(messages, requestHints);
+  }
+
+  getRequestHints(): RequestHints {
+    return this.requestHints;
   }
 
   getMessages(): UIMessage[] {

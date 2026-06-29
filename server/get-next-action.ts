@@ -47,7 +47,7 @@ export const getNextAction = async (
     model,
     schema: actionSchema,
     prompt: `
-${getSystemPrompt()}
+${getSystemPrompt(context.getRequestHints())}
 
 You are deciding the next action in a research loop. Choose exactly one action:
 

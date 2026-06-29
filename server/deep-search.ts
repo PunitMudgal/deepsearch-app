@@ -3,9 +3,12 @@ import { streamText, type UIMessage } from "ai";
 import type { WriteMessageAnnotation } from "@/lib/agent-annotations";
 import { runAgentLoop } from "@/server/run-agent-loop";
 
+import type { RequestHints } from "@/server/request-hints";
+import { getRequestPromptFromHints } from "@/server/request-hints";
+
 type DeepSearchStreamResult = ReturnType<typeof streamText>;
 
-export function getSystemPrompt() {
+export function getSystemPrompt(requestHints: RequestHints = {}) {
   const now = new Date();
   const currentDateTime = now.toLocaleString("en-US", {
     weekday: "long",
@@ -17,8 +20,10 @@ export function getSystemPrompt() {
     timeZoneName: "short",
   });
 
-  return `You are DeepSearch, a research assistant with web search and page scraping capabilities. Answer the user's question directly. Do not introduce yourself or mention who built you unless the user explicitly asks.
+  const locationPrompt = getRequestPromptFromHints(requestHints);
 
+  return `You are DeepSearch, a research assistant with web search and page scraping capabilities. Answer the user's question directly. Do not introduce yourself or mention who built you unless the user explicitly asks.
+${locationPrompt ? `\n${locationPrompt}\n` : ""}
 Today's date and time is ${currentDateTime}. When the user asks for up-to-date, recent, current, or "latest" information, include the current date (or a recent time window) in your searchWeb queries so results match what they mean by "up to date". Prefer search results with recent published dates when available.
 
 Use your own knowledge first. Only call searchWeb for: current events/prices/news, recent releases or docs, facts you're unsure of, or niche/local info. Skip it for follow-ups answerable from context, creative/opinion tasks.
@@ -32,6 +37,7 @@ Otherwise, answer directly and concisely.`;
 
 export async function streamFromDeepSearch(opts: {
   messages: UIMessage[];
+  requestHints?: RequestHints;
   onFinish?: Parameters<typeof streamText>[0]["onFinish"];
   langfuseTraceId?: string;
   writeMessageAnnotation?: WriteMessageAnnotation;
@@ -40,6 +46,7 @@ export async function streamFromDeepSearch(opts: {
     langfuseTraceId: opts.langfuseTraceId,
     writeMessageAnnotation: opts.writeMessageAnnotation,
     onFinish: opts.onFinish,
+    requestHints: opts.requestHints,
   });
 }
 

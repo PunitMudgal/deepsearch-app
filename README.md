@@ -10,6 +10,7 @@ A research assistant built with Next.js that combines an LLM agent with web sear
 - **Web search** — Tavily integration returns titles, snippets, links, and published dates for up-to-date queries.
 - **Web scraping** — Full-page content extraction with Cheerio and Turndown (HTML → markdown). Respects `robots.txt`, uses exponential backoff on failures, and caches results in Redis.
 - **Date-aware prompts** — The system prompt injects the current date and time so “latest” or “recent” questions produce appropriately scoped search queries.
+- **Location-aware prompts** — The user's approximate location (from Vercel geolocation) is added to the system prompt so “near me” and other local queries work correctly.
 - **Source citations** — Answers cite sources as markdown links `[title](url)` rather than bare URLs.
 
 ### Chat experience

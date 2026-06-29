@@ -2,6 +2,7 @@ import type { UIMessage } from "ai";
 import { streamText } from "ai";
 
 import type { WriteMessageAnnotation } from "@/lib/agent-annotations";
+import type { RequestHints } from "@/server/request-hints";
 import { scrapePages } from "@/server/search/scrape-pages";
 import { searchTavily } from "@/server/search/tavily";
 import { answerQuestion } from "@/server/answer-question";
@@ -57,10 +58,11 @@ export async function runAgentLoop(
     abortSignal?: AbortSignal;
     langfuseTraceId?: string;
     writeMessageAnnotation?: WriteMessageAnnotation;
-    onFinish: Parameters<typeof streamText>[0]["onFinish"];
-  },
+    onFinish?: Parameters<typeof streamText>[0]["onFinish"];
+    requestHints?: RequestHints;
+  } = {},
 ): Promise<AgentLoopResult> {
-  const ctx = SystemContext.fromMessages(messages);
+  const ctx = SystemContext.fromMessages(messages, opts.requestHints ?? {});
   const writeMessageAnnotation = opts.writeMessageAnnotation ?? (() => {});
   let step = 0;
 

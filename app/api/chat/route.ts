@@ -11,6 +11,7 @@ import { auth } from "@/server/auth";
 import { type StoredUIMessage, upsertChat } from "@/server/chat";
 import { streamFromDeepSearch } from "@/server/deep-search";
 import { generateChatTitle } from "@/server/generate-chat-title";
+import { getRequestHints } from "@/server/request-hints";
 import { checkAndRecordRequest } from "@/server/rate-limit";
 import {
   checkRateLimit,
@@ -65,6 +66,8 @@ export async function POST(request: Request) {
       status: 429,
     });
   }
+
+  const requestHints = getRequestHints(request);
 
   const body = (await request.json()) as {
     messages: UIMessage[];
@@ -160,6 +163,7 @@ export async function POST(request: Request) {
 
       const result = await streamFromDeepSearch({
         messages,
+        requestHints,
         langfuseTraceId: trace.id,
         writeMessageAnnotation,
       });

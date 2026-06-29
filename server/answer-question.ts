@@ -15,7 +15,7 @@ function buildAnswerSystemPrompt(
   const queryHistory = context.getQueryHistory();
   const scrapeHistory = context.getScrapeHistory();
 
-  return `${getSystemPrompt()}
+  return `${getSystemPrompt(context.getRequestHints())}
 
 ${finalNote}You are answering the user's latest message in the context of the full conversation provided.
 
