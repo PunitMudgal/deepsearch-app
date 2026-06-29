@@ -1,15 +1,20 @@
-import { smoothStream, streamText, type TelemetrySettings } from "ai";
+import { smoothStream, streamText } from "ai";
 
 import { markdownJoinerTransform } from "@/lib/markdown-joiner-transform";
 import { model } from "@/models";
 import { getSystemPrompt } from "@/server/deep-search";
+import { createLangfuseTelemetry } from "@/server/langfuse-telemetry";
 import type { SystemContext } from "@/server/system-context";
 
 type AnswerQuestionResult = ReturnType<typeof streamText>;
 
 export function answerQuestion(
   context: SystemContext,
-  opts: { isFinal?: boolean; telemetry?: TelemetrySettings } = {},
+  opts: {
+    isFinal?: boolean;
+    langfuseTraceId: string | undefined;
+    functionId: string;
+  },
 ): AnswerQuestionResult {
   const finalNote = opts.isFinal
     ? `We may not have all the information we need to answer the question, but we need to make our best effort based on the research gathered so far.
@@ -40,6 +45,9 @@ Answer the user's question based on the research context above. When citing sour
         chunking: "line",
       }),
     ],
-    experimental_telemetry: opts.telemetry,
+    experimental_telemetry: createLangfuseTelemetry({
+      langfuseTraceId: opts.langfuseTraceId,
+      functionId: opts.functionId,
+    }),
   });
 }

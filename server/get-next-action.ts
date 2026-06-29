@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { model } from "@/models";
 import { getSystemPrompt } from "@/server/deep-search";
+import { createLangfuseTelemetry } from "@/server/langfuse-telemetry";
 import type { SystemContext } from "@/server/system-context";
 
 export const actionSchema = z.object({
@@ -22,7 +23,7 @@ export const actionSchema = z.object({
     ),
   query: z
     .string()
-    .describe("The query to search for. Required if type is 'search'.")
+    .describe("The query to search for. Only required if type is 'search'.")
     .optional(),
   urls: z
     .array(z.string())
@@ -32,7 +33,13 @@ export const actionSchema = z.object({
 
 export type Action = z.infer<typeof actionSchema>;
 
-export const getNextAction = async (context: SystemContext) => {
+export const getNextAction = async (
+  context: SystemContext,
+  opts: {
+    langfuseTraceId: string | undefined;
+    functionId: string;
+  },
+) => {
   const queryHistory = context.getQueryHistory();
   const scrapeHistory = context.getScrapeHistory();
 
@@ -59,6 +66,10 @@ ${queryHistory || "No searches yet."}
 
 ${scrapeHistory || "No scrapes yet."}
     `,
+    experimental_telemetry: createLangfuseTelemetry({
+      langfuseTraceId: opts.langfuseTraceId,
+      functionId: opts.functionId,
+    }),
   });
 
   return result.object;

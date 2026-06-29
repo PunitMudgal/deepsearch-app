@@ -1,5 +1,5 @@
 import type { UIMessage } from "ai";
-import { streamText, type TelemetrySettings } from "ai";
+import { streamText } from "ai";
 
 import type { WriteMessageAnnotation } from "@/lib/agent-annotations";
 import { scrapePages } from "@/server/search/scrape-pages";
@@ -55,15 +55,19 @@ export async function runAgentLoop(
   messages: UIMessage[],
   opts: {
     abortSignal?: AbortSignal;
-    telemetry?: TelemetrySettings;
+    langfuseTraceId?: string;
     writeMessageAnnotation?: WriteMessageAnnotation;
   } = {},
 ): Promise<AgentLoopResult> {
   const ctx = SystemContext.fromMessages(messages);
   const writeMessageAnnotation = opts.writeMessageAnnotation ?? (() => {});
+  let step = 0;
 
   while (!ctx.shouldStop()) {
-    const nextAction = await getNextAction(ctx);
+    const nextAction = await getNextAction(ctx, {
+      langfuseTraceId: opts.langfuseTraceId,
+      functionId: `agent-get-next-action-step-${step}`,
+    });
 
     writeMessageAnnotation({
       type: "NEW_ACTION",
@@ -73,6 +77,7 @@ export async function runAgentLoop(
     if (nextAction.type === "search") {
       if (!nextAction.query) {
         ctx.incrementStep();
+        step++;
         continue;
       }
 
@@ -86,6 +91,7 @@ export async function runAgentLoop(
     } else if (nextAction.type === "scrape") {
       if (!nextAction.urls || nextAction.urls.length === 0) {
         ctx.incrementStep();
+        step++;
         continue;
       }
 
@@ -96,11 +102,19 @@ export async function runAgentLoop(
 
       ctx.reportScrapes(scrapes);
     } else if (nextAction.type === "answer") {
-      return answerQuestion(ctx, { telemetry: opts.telemetry });
+      return answerQuestion(ctx, {
+        langfuseTraceId: opts.langfuseTraceId,
+        functionId: "agent-answer-question",
+      });
     }
 
     ctx.incrementStep();
+    step++;
   }
 
-  return answerQuestion(ctx, { isFinal: true, telemetry: opts.telemetry });
+  return answerQuestion(ctx, {
+    isFinal: true,
+    langfuseTraceId: opts.langfuseTraceId,
+    functionId: "agent-answer-question-final",
+  });
 }

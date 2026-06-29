@@ -1,4 +1,4 @@
-import { streamText, type TelemetrySettings, type UIMessage } from "ai";
+import { streamText, type UIMessage } from "ai";
 
 import type { WriteMessageAnnotation } from "@/lib/agent-annotations";
 import { runAgentLoop } from "@/server/run-agent-loop";
@@ -25,7 +25,7 @@ Use your own knowledge first. Only call searchWeb for: current events/prices/new
 
 Use scrapePages when snippets aren't enough — long articles, missing details, or sources you need to cite precisely. Pass it specific URLs from search results. Typical flow: search → scrape top 1–3 URLs → answer. Some scrapes fail (robots.txt, rate limits); fall back to snippets if so.
 
-When citing: always use markdown links [title](url), never bare URLs. If search/scrape returns nothing useful, say so instead of guessing.
+When citing: always use markdown links [title](url), never bare URLs. If search/scrape returned nothing useful, say so instead of guessing.
 
 Otherwise, answer directly and concisely.`;
 }
@@ -33,13 +33,13 @@ Otherwise, answer directly and concisely.`;
 export async function streamFromDeepSearch(opts: {
   messages: UIMessage[];
   onFinish?: Parameters<typeof streamText>[0]["onFinish"];
-  telemetry: TelemetrySettings;
+  langfuseTraceId?: string;
   writeMessageAnnotation?: WriteMessageAnnotation;
 }): Promise<DeepSearchStreamResult> {
   void opts.onFinish;
 
   return runAgentLoop(opts.messages, {
-    telemetry: opts.telemetry,
+    langfuseTraceId: opts.langfuseTraceId,
     writeMessageAnnotation: opts.writeMessageAnnotation,
   });
 }
@@ -47,9 +47,6 @@ export async function streamFromDeepSearch(opts: {
 export async function askDeepSearch(messages: UIMessage[]) {
   const result = await streamFromDeepSearch({
     messages,
-    telemetry: {
-      isEnabled: false,
-    },
   });
 
   await result.consumeStream();
