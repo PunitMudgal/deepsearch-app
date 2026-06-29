@@ -1,5 +1,6 @@
-import { streamText, type TelemetrySettings } from "ai";
+import { smoothStream, streamText, type TelemetrySettings } from "ai";
 
+import { markdownJoinerTransform } from "@/lib/markdown-joiner-transform";
 import { model } from "@/models";
 import { getSystemPrompt } from "@/server/deep-search";
 import type { SystemContext } from "@/server/system-context";
@@ -32,6 +33,13 @@ ${queryHistory || "No searches yet."}
 ${scrapeHistory || "No scrapes yet."}
 
 Answer the user's question based on the research context above. When citing sources, always use markdown links [title](url), never bare URLs. If search/scrape returned nothing useful, say so instead of guessing.`,
+    experimental_transform: [
+      markdownJoinerTransform(),
+      smoothStream({
+        delayInMs: 20,
+        chunking: "line",
+      }),
+    ],
     experimental_telemetry: opts.telemetry,
   });
 }
