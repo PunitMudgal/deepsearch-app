@@ -102,7 +102,7 @@ export async function runAgentLoop(
 
       ctx.reportScrapes(scrapes);
     } else if (nextAction.type === "answer") {
-      return answerQuestion(ctx, {
+      return await answerQuestion(ctx, {
         langfuseTraceId: opts.langfuseTraceId,
         functionId: "agent-answer-question",
       });
@@ -112,7 +112,7 @@ export async function runAgentLoop(
     step++;
   }
 
-  return answerQuestion(ctx, {
+  return await answerQuestion(ctx, {
     isFinal: true,
     langfuseTraceId: opts.langfuseTraceId,
     functionId: "agent-answer-question-final",

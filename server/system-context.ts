@@ -17,8 +17,10 @@ type ScrapeResult = {
   result: string;
 };
 
-function getInitialQuestionFromMessages(messages: UIMessage[]): string {
-  const userMessage = [...messages].reverse().find((message) => message.role === "user");
+function getLatestUserMessageFromMessages(messages: UIMessage[]): string {
+  const userMessage = [...messages]
+    .reverse()
+    .find((message) => message.role === "user");
   const textPart = userMessage?.parts.find((part) => part.type === "text");
 
   if (!textPart || textPart.type !== "text") {
@@ -32,36 +34,45 @@ const toQueryResult = (query: QueryResultSearchResult) =>
   [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
 
 export class SystemContext {
-  /**
-   * The current step in the loop
-   */
   private step = 0;
-
-  /**
-   * The history of all queries searched
-   */
   private queryHistory: QueryResult[] = [];
-
-  /**
-   * The history of all URLs scraped
-   */
   private scrapeHistory: ScrapeResult[] = [];
+  private messages: UIMessage[];
 
-  /**
-   * The user's initial question for this research loop
-   */
-  private initialQuestion: string;
-
-  constructor(initialQuestion: string) {
-    this.initialQuestion = initialQuestion;
+  constructor(messages: UIMessage[]) {
+    this.messages = messages;
   }
 
   static fromMessages(messages: UIMessage[]): SystemContext {
-    return new SystemContext(getInitialQuestionFromMessages(messages));
+    return new SystemContext(messages);
   }
 
-  getInitialQuestion(): string {
-    return this.initialQuestion;
+  getMessages(): UIMessage[] {
+    return this.messages;
+  }
+
+  getLatestUserMessage(): string {
+    return getLatestUserMessageFromMessages(this.messages);
+  }
+
+  getConversationHistory(): string {
+    return this.messages
+      .map((message) => {
+        const text = message.parts
+          .filter((part) => part.type === "text")
+          .map((part) => (part.type === "text" ? part.text : ""))
+          .filter((partText) => partText.trim().length > 0)
+          .join("\n");
+
+        if (!text.trim()) {
+          return null;
+        }
+
+        const label = message.role === "user" ? "User" : "Assistant";
+        return `${label}:\n${text}`;
+      })
+      .filter((entry): entry is string => entry !== null)
+      .join("\n\n");
   }
 
   incrementStep() {

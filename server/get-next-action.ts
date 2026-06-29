@@ -57,10 +57,15 @@ You are deciding the next action in a research loop. Choose exactly one action:
 
 For every action, provide a concise title for the UI and clear reasoning for why you chose this step.
 
-User question:
-${context.getInitialQuestion()}
+Pay close attention to the full conversation history. Follow-up messages like "that's not working" refer to earlier messages — use that context when choosing searches and deciding when to answer.
 
-Here is the research context so far:
+Conversation history:
+${context.getConversationHistory() || "No prior messages."}
+
+Latest user message:
+${context.getLatestUserMessage()}
+
+Here is the research context gathered this turn:
 
 ${queryHistory || "No searches yet."}
 
