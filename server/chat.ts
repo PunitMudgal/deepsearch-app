@@ -12,7 +12,7 @@ export type StoredUIMessage = UIMessage & {
 export const upsertChat = async (opts: {
   userId: string;
   chatId: string;
-  title: string;
+  title?: string;
   messages: StoredUIMessage[];
 }) => {
   const { userId, chatId, title, messages: chatMessages } = opts;
@@ -31,7 +31,10 @@ export const upsertChat = async (opts: {
 
       await tx
         .update(chats)
-        .set({ title, updatedAt: new Date() })
+        .set({
+          updatedAt: new Date(),
+          ...(title !== undefined ? { title } : {}),
+        })
         .where(eq(chats.id, chatId));
 
       await tx.delete(messages).where(eq(messages.chatId, chatId));
@@ -39,7 +42,7 @@ export const upsertChat = async (opts: {
       await tx.insert(chats).values({
         id: chatId,
         userId,
-        title,
+        title: title ?? "New chat",
       });
     }
 

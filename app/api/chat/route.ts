@@ -10,6 +10,7 @@ import type { OurMessageAnnotation } from "@/lib/agent-annotations";
 import { auth } from "@/server/auth";
 import { type StoredUIMessage, upsertChat } from "@/server/chat";
 import { streamFromDeepSearch } from "@/server/deep-search";
+import { generateChatTitle } from "@/server/generate-chat-title";
 import { checkAndRecordRequest } from "@/server/rate-limit";
 import {
   checkRateLimit,
@@ -25,22 +26,6 @@ const langfuse = new Langfuse({
   publicKey: env.LANGFUSE_PUBLIC_KEY,
   baseUrl: env.LANGFUSE_BASE_URL,
 });
-
-function getChatTitle(messages: UIMessage[]) {
-  const firstUserMessage = messages.find((message) => message.role === "user");
-
-  if (!firstUserMessage) {
-    return "New chat";
-  }
-
-  const textPart = firstUserMessage.parts.find((part) => part.type === "text");
-
-  if (!textPart || textPart.type !== "text" || !textPart.text.trim()) {
-    return "New chat";
-  }
-
-  return textPart.text.trim().slice(0, 100);
-}
 
 function attachAnnotationsToLastMessage(
   chatMessages: UIMessage[],
@@ -88,7 +73,6 @@ export async function POST(request: Request) {
   };
 
   const { messages, chatId, isNewChat } = body;
-  const title = getChatTitle(messages);
 
   const trace = langfuse.trace({
     name: "chat",
@@ -99,12 +83,16 @@ export async function POST(request: Request) {
     sessionId: chatId,
   });
 
+  const titlePromise = isNewChat
+    ? generateChatTitle(messages, { langfuseTraceId: trace.id })
+    : Promise.resolve("");
+
   const upsertInitialSpan = trace.span({
     name: "upsert-chat-initial",
     input: {
       userId: session.user.id,
       chatId,
-      title,
+      title: isNewChat ? "Generating..." : undefined,
       messageCount: messages.length,
       isNewChat,
     },
@@ -114,7 +102,7 @@ export async function POST(request: Request) {
     await upsertChat({
       userId: session.user.id,
       chatId,
-      title,
+      ...(isNewChat ? { title: "Generating..." } : {}),
       messages,
     });
 
@@ -147,10 +135,6 @@ export async function POST(request: Request) {
   await recordRateLimit(GLOBAL_LLM_RATE_LIMIT_CONFIG);
 
   const annotations: OurMessageAnnotation[] = [];
-  let resolveMessages: ((messages: StoredUIMessage[]) => void) | null = null;
-  const messagesReady = new Promise<StoredUIMessage[]>((resolve) => {
-    resolveMessages = resolve;
-  });
 
   const stream = createUIMessageStream({
     originalMessages: messages,
@@ -178,60 +162,50 @@ export async function POST(request: Request) {
         messages,
         langfuseTraceId: trace.id,
         writeMessageAnnotation,
-        onFinish: async () => {
-          const messagesWithAnnotations = await messagesReady;
-          const lastMessage =
-            messagesWithAnnotations[messagesWithAnnotations.length - 1];
-
-          if (!lastMessage) {
-            return;
-          }
-
-          lastMessage.annotations = annotations;
-
-          const finishTitle = getChatTitle(messagesWithAnnotations);
-
-          const upsertFinishSpan = trace.span({
-            name: "upsert-chat-on-finish",
-            input: {
-              userId: session.user.id,
-              chatId,
-              title: finishTitle,
-              messageCount: messagesWithAnnotations.length,
-            },
-          });
-
-          try {
-            await upsertChat({
-              userId: session.user.id,
-              chatId,
-              title: finishTitle,
-              messages: messagesWithAnnotations,
-            });
-
-            upsertFinishSpan.end({
-              output: { success: true, chatId },
-            });
-          } catch (error) {
-            upsertFinishSpan.end({
-              output: {
-                success: false,
-                error: error instanceof Error ? error.message : "Unknown error",
-              },
-            });
-            console.error("Failed to save chat:", error);
-          }
-
-          await langfuse.flushAsync();
-        },
       });
 
       writer.merge(result.toUIMessageStream());
     },
     onFinish: async ({ messages: updatedMessages }) => {
-      resolveMessages?.(
-        attachAnnotationsToLastMessage(updatedMessages, annotations),
+      const messagesWithAnnotations = attachAnnotationsToLastMessage(
+        updatedMessages,
+        annotations,
       );
+
+      const title = isNewChat ? await titlePromise : "";
+
+      const upsertFinishSpan = trace.span({
+        name: "upsert-chat-on-finish",
+        input: {
+          userId: session.user.id,
+          chatId,
+          title: title || undefined,
+          messageCount: messagesWithAnnotations.length,
+        },
+      });
+
+      try {
+        await upsertChat({
+          userId: session.user.id,
+          chatId,
+          messages: messagesWithAnnotations,
+          ...(title ? { title } : {}),
+        });
+
+        upsertFinishSpan.end({
+          output: { success: true, chatId },
+        });
+      } catch (error) {
+        upsertFinishSpan.end({
+          output: {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          },
+        });
+        console.error("Failed to save chat:", error);
+      }
+
+      await langfuse.flushAsync();
     },
     onError: (error) => {
       console.error(error);

@@ -4,7 +4,7 @@ import { createScorer } from "evalite";
 import { z } from "zod";
 
 import { getQuestionFromMessages } from "@/evals/utils";
-import { factualityModel } from "@/models";
+import { secondaryModel } from "@/models";
 
 export async function checkFactuality(opts: {
   question: string;
@@ -12,7 +12,7 @@ export async function checkFactuality(opts: {
   submission: string;
 }) {
   const { object } = await generateObject({
-    model: factualityModel,
+    model: secondaryModel,
     prompt: `
       You are comparing a submitted answer to an expert answer on a given question. Here is the data:
       [BEGIN DATA]

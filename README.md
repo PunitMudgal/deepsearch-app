@@ -16,7 +16,7 @@ A research assistant built with Next.js that combines an LLM agent with web sear
 
 - **Streaming responses** — Real-time token streaming with visible tool calls (e.g. search in progress).
 - **Markdown rendering** — Rich formatting for lists, code blocks, and clickable source links.
-- **Chat persistence** — Conversations saved to PostgreSQL (Drizzle ORM). Message text and reasoning-step annotations are persisted so chats survive page refreshes.
+- **Chat persistence** — Conversations saved to PostgreSQL (Drizzle ORM). Message text and reasoning-step annotations are persisted so chats survive page refreshes. New chats get LLM-generated titles in the background without blocking the response stream.
 - **New chat flow** — Stable chat IDs, URL updates after the first message, and clean state resets without interrupting active streams.
 - **Auto-scroll** — Messages stick to the bottom while streaming; a scroll-to-bottom button appears when you scroll up.
 - **Copy messages** — One-click copy on user and assistant messages.
@@ -44,7 +44,7 @@ A research assistant built with Next.js that combines an LLM agent with web sear
 | Layer | Tools |
 | --- | --- |
 | Framework | Next.js 16, React 19 |
-| AI | AI SDK v6, Google Gemini, Tavily |
+| AI | AI SDK v6, Google Gemini (agent), Groq (secondary tasks), Tavily |
 | Auth | NextAuth v5, Drizzle adapter |
 | Database | PostgreSQL, Drizzle ORM |
 | Cache / limits | Redis (ioredis) |
@@ -60,7 +60,7 @@ A research assistant built with Next.js that combines an LLM agent with web sear
 - [Bun](https://bun.sh)
 - PostgreSQL database
 - Redis instance
-- API keys: Google Generative AI, Tavily, OAuth providers (GitHub, Discord)
+- API keys: Google Generative AI, Groq (secondary tasks), Tavily, OAuth providers (GitHub, Discord)
 
 ### Install and run
 
@@ -89,11 +89,16 @@ AUTH_DISCORD_SECRET=
 
 # AI & search
 GOOGLE_GENERATIVE_AI_API_KEY=
+GROQ_API_KEY=
 TAVILY_API_KEY=
 
 # Redis
 REDIS_URL=
+```
 
+Get a free Groq API key from [console.groq.com](https://console.groq.com/) (used for chat titles and eval scorers so the main Gemini quota is reserved for the agent).
+
+```env
 # Rate limiting (optional)
 DAILY_REQUEST_LIMIT=6
 

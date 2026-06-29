@@ -9,7 +9,7 @@ import {
   generateEvaluationStatementsPrompt,
 } from "@/evals/scorers/answer-relevancy-prompts";
 import { getQuestionFromMessages } from "@/evals/utils";
-import { factualityModel } from "@/models";
+import { secondaryModel } from "@/models";
 
 const verdictSchema = z.object({
   verdict: z.enum(["yes", "no", "unsure"]),
@@ -52,7 +52,7 @@ export async function checkAnswerRelevancy(opts: {
   }
 
   const { object: statementsResult } = await generateObject({
-    model: factualityModel,
+    model: secondaryModel,
     prompt: generateEvaluationStatementsPrompt({ output: opts.submission }),
     schema: z.object({
       statements: z.array(z.string()),
@@ -65,7 +65,7 @@ export async function checkAnswerRelevancy(opts: {
       : [opts.submission];
 
   const { object: evaluationResult } = await generateObject({
-    model: factualityModel,
+    model: secondaryModel,
     system: ANSWER_RELEVANCY_AGENT_INSTRUCTIONS,
     prompt: generateEvaluatePrompt({
       input: opts.question,

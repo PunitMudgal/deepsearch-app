@@ -57,8 +57,8 @@ export async function runAgentLoop(
     abortSignal?: AbortSignal;
     langfuseTraceId?: string;
     writeMessageAnnotation?: WriteMessageAnnotation;
-    onFinish?: Parameters<typeof streamText>[0]["onFinish"];
-  } = {},
+    onFinish: Parameters<typeof streamText>[0]["onFinish"];
+  },
 ): Promise<AgentLoopResult> {
   const ctx = SystemContext.fromMessages(messages);
   const writeMessageAnnotation = opts.writeMessageAnnotation ?? (() => {});
