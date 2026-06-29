@@ -1,3 +1,5 @@
+import type { UIMessage } from "ai";
+
 type QueryResultSearchResult = {
   date: string;
   title: string;
@@ -14,6 +16,17 @@ type ScrapeResult = {
   url: string;
   result: string;
 };
+
+function getInitialQuestionFromMessages(messages: UIMessage[]): string {
+  const userMessage = [...messages].reverse().find((message) => message.role === "user");
+  const textPart = userMessage?.parts.find((part) => part.type === "text");
+
+  if (!textPart || textPart.type !== "text") {
+    return "";
+  }
+
+  return textPart.text;
+}
 
 const toQueryResult = (query: QueryResultSearchResult) =>
   [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
@@ -33,6 +46,27 @@ export class SystemContext {
    * The history of all URLs scraped
    */
   private scrapeHistory: ScrapeResult[] = [];
+
+  /**
+   * The user's initial question for this research loop
+   */
+  private initialQuestion: string;
+
+  constructor(initialQuestion: string) {
+    this.initialQuestion = initialQuestion;
+  }
+
+  static fromMessages(messages: UIMessage[]): SystemContext {
+    return new SystemContext(getInitialQuestionFromMessages(messages));
+  }
+
+  getInitialQuestion(): string {
+    return this.initialQuestion;
+  }
+
+  incrementStep() {
+    this.step++;
+  }
 
   shouldStop() {
     return this.step >= 10;

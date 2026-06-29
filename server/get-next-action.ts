@@ -1,0 +1,71 @@
+import { generateObject } from "ai";
+import { z } from "zod";
+
+import { model } from "@/models";
+import { getSystemPrompt } from "@/server/deep-search";
+import type { SystemContext } from "@/server/system-context";
+
+export interface SearchAction {
+  type: "search";
+  query: string;
+}
+
+export interface ScrapeAction {
+  type: "scrape";
+  urls: string[];
+}
+
+export interface AnswerAction {
+  type: "answer";
+}
+
+export type Action = SearchAction | ScrapeAction | AnswerAction;
+
+export const actionSchema = z.object({
+  type: z
+    .enum(["search", "scrape", "answer"])
+    .describe(
+      `The type of action to take.
+      - 'search': Search the web for more information.
+      - 'scrape': Scrape a URL.
+      - 'answer': Answer the user's question and complete the loop.`,
+    ),
+  query: z
+    .string()
+    .describe("The query to search for. Required if type is 'search'.")
+    .optional(),
+  urls: z
+    .array(z.string())
+    .describe("The URLs to scrape. Required if type is 'scrape'.")
+    .optional(),
+});
+
+export const getNextAction = async (context: SystemContext) => {
+  const queryHistory = context.getQueryHistory();
+  const scrapeHistory = context.getScrapeHistory();
+
+  const result = await generateObject({
+    model,
+    schema: actionSchema,
+    prompt: `
+${getSystemPrompt()}
+
+You are deciding the next action in a research loop. Choose exactly one action:
+
+- search: Search the web when you need up-to-date information, facts you're unsure of, or more sources. Provide a focused query. Include the current date or a recent time window when the user asks for "latest" or "recent" information.
+- scrape: Scrape specific URLs when snippets are not enough and you need full page content to cite precisely. Pass URLs from prior search results. Typical flow: search → scrape top 1–3 URLs → answer.
+- answer: Stop the loop when you have enough information to answer the user's question. Prefer answering from gathered context when possible; do not guess if search/scrape returned nothing useful.
+
+User question:
+${context.getInitialQuestion()}
+
+Here is the research context so far:
+
+${queryHistory || "No searches yet."}
+
+${scrapeHistory || "No scrapes yet."}
+    `,
+  });
+
+  return result.object;
+};
