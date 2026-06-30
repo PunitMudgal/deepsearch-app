@@ -59,7 +59,7 @@ export class SystemContext {
   }
 
   getConversationHistory(): string {
-    return this.messages
+    const formattedMessages = this.messages
       .map((message) => {
         const text = message.parts
           .filter((part) => part.type === "text")
@@ -71,11 +71,16 @@ export class SystemContext {
           return null;
         }
 
-        const label = message.role === "user" ? "User" : "Assistant";
-        return `${label}:\n${text}`;
+        const tag = message.role === "user" ? "user" : "assistant";
+        return `<${tag}>\n${text}\n</${tag}>`;
       })
-      .filter((entry): entry is string => entry !== null)
-      .join("\n\n");
+      .filter((entry): entry is string => entry !== null);
+
+    if (formattedMessages.length === 0) {
+      return "";
+    }
+
+    return `<conversation>\n${formattedMessages.join("\n\n")}\n</conversation>`;
   }
 
   incrementStep() {
