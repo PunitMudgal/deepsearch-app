@@ -2,21 +2,17 @@ import type { UIMessage } from "ai";
 
 import type { RequestHints } from "@/server/request-hints";
 
-type QueryResultSearchResult = {
+type SearchResult = {
   date: string;
   title: string;
   url: string;
   snippet: string;
+  scrapedContent: string;
 };
 
-type QueryResult = {
+type SearchHistoryEntry = {
   query: string;
-  results: QueryResultSearchResult[];
-};
-
-type ScrapeResult = {
-  url: string;
-  result: string;
+  results: SearchResult[];
 };
 
 function getLatestUserMessageFromMessages(messages: UIMessage[]): string {
@@ -32,13 +28,9 @@ function getLatestUserMessageFromMessages(messages: UIMessage[]): string {
   return textPart.text;
 }
 
-const toQueryResult = (query: QueryResultSearchResult) =>
-  [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
-
 export class SystemContext {
   private step = 0;
-  private queryHistory: QueryResult[] = [];
-  private scrapeHistory: ScrapeResult[] = [];
+  private searchHistory: SearchHistoryEntry[] = [];
   private messages: UIMessage[];
   private requestHints: RequestHints;
 
@@ -94,37 +86,29 @@ export class SystemContext {
     return this.step >= 10;
   }
 
-  reportQueries(queries: QueryResult[]) {
-    this.queryHistory.push(...queries);
+  reportSearch(search: SearchHistoryEntry) {
+    this.searchHistory.push(search);
   }
 
-  reportScrapes(scrapes: ScrapeResult[]) {
-    this.scrapeHistory.push(...scrapes);
-  }
-
-  getQueryHistory(): string {
-    return this.queryHistory
-      .map((query) =>
+  getSearchHistory(): string {
+    return this.searchHistory
+      .map((search) =>
         [
-          `## Query: "${query.query}"`,
-          ...query.results.map(toQueryResult),
-        ].join("\n\n"),
-      )
-      .join("\n\n");
-  }
-
-  getScrapeHistory(): string {
-    return this.scrapeHistory
-      .map((scrape) =>
-        [
-          `## Scrape: "${scrape.url}"`,
-          `<scrape_result>`,
-          scrape.result,
-          `</scrape_result>`,
+          `## Query: "${search.query}"`,
+          ...search.results.map((result) =>
+            [
+              `### ${result.date} - ${result.title}`,
+              result.url,
+              result.snippet,
+              `<scrape_result>`,
+              result.scrapedContent,
+              `</scrape_result>`,
+            ].join("\n\n"),
+          ),
         ].join("\n\n"),
       )
       .join("\n\n");
   }
 }
 
-export type { QueryResult, QueryResultSearchResult, ScrapeResult };
+export type { SearchHistoryEntry, SearchResult };

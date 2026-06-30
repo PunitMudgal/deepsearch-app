@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
-import { Link, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 import type { OurMessageAnnotation } from "@/lib/agent-annotations";
 
@@ -66,17 +66,6 @@ export function ReasoningSteps({
                     <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
                       <Search className="size-4 shrink-0" />
                       <span>{annotation.action.query}</span>
-                    </div>
-                  ) : null}
-
-                  {annotation.action.type === "scrape" && annotation.action.urls ? (
-                    <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
-                      <Link className="size-4 shrink-0" />
-                      <span>
-                        {annotation.action.urls
-                          .map((url) => new URL(url).hostname)
-                          .join(", ")}
-                      </span>
                     </div>
                   ) : null}
                 </div>

@@ -11,7 +11,7 @@ const groq = createGroq({
   apiKey: env.GROQ_API_KEY,
 });
 
-/** Primary model for the research agent (search, scrape, answer). */
+/** Primary model for the research agent (search and answer). */
 export const model = google("gemini-2.5-flash");
 
 /**

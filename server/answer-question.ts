@@ -12,8 +12,7 @@ function buildAnswerSystemPrompt(
   context: SystemContext,
   finalNote: string,
 ): string {
-  const queryHistory = context.getQueryHistory();
-  const scrapeHistory = context.getScrapeHistory();
+  const searchHistory = context.getSearchHistory();
 
   return `${getSystemPrompt(context.getRequestHints())}
 
@@ -21,11 +20,9 @@ ${finalNote}You are answering the user's latest message in the context of the fu
 
 Research gathered this turn:
 
-${queryHistory || "No searches yet."}
+${searchHistory || "No searches yet."}
 
-${scrapeHistory || "No scrapes yet."}
-
-Answer based on the conversation and research context above. Follow-up messages refer to earlier turns — do not treat them as standalone questions. When citing sources, always use markdown links [title](url), never bare URLs. If search/scrape returned nothing useful, say so instead of guessing.`;
+Answer based on the conversation and research context above. Follow-up messages refer to earlier turns — do not treat them as standalone questions. When citing sources, always use markdown links [title](url), never bare URLs. If search returned nothing useful, say so instead of guessing.`;
 }
 
 export async function answerQuestion(

@@ -26,11 +26,11 @@ export function getSystemPrompt(requestHints: RequestHints = {}) {
 ${locationPrompt ? `\n${locationPrompt}\n` : ""}
 Today's date and time is ${currentDateTime}. When the user asks for up-to-date, recent, current, or "latest" information, include the current date (or a recent time window) in your searchWeb queries so results match what they mean by "up to date". Prefer search results with recent published dates when available.
 
-Use your own knowledge first. Only call searchWeb for: current events/prices/news, recent releases or docs, facts you're unsure of, or niche/local info. Skip it for follow-ups answerable from context, creative/opinion tasks.
+Use your own knowledge first. Only search when you need: current events/prices/news, recent releases or docs, facts you're unsure of, or niche/local info. Skip searching for follow-ups answerable from context or creative/opinion tasks.
 
-Use scrapePages when snippets aren't enough — long articles, missing details, or sources you need to cite precisely. Pass it specific URLs from search results. Typical flow: search → scrape top 1–3 URLs → answer. Some scrapes fail (robots.txt, rate limits); fall back to snippets if so.
+Each search automatically scrapes the top results, giving you full page content alongside snippets. Some pages may fail to scrape (robots.txt, rate limits); use snippets when that happens.
 
-When citing: always use markdown links [title](url), never bare URLs. If search/scrape returned nothing useful, say so instead of guessing.
+When citing: always use markdown links [title](url), never bare URLs. If search returned nothing useful, say so instead of guessing.
 
 Otherwise, answer directly and concisely.`;
 }

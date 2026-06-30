@@ -9,47 +9,44 @@ import { answerQuestion } from "@/server/answer-question";
 import { getNextAction } from "@/server/get-next-action";
 import {
   SystemContext,
-  type QueryResult,
-  type ScrapeResult,
+  type SearchHistoryEntry,
 } from "@/server/system-context";
 
 type AgentLoopResult = ReturnType<typeof streamText>;
 
-async function searchWeb(query: string, abortSignal?: AbortSignal) {
+async function searchAndScrape(
+  query: string,
+  abortSignal?: AbortSignal,
+): Promise<SearchHistoryEntry> {
   if (abortSignal?.aborted) {
     throw abortSignal.reason ?? new Error("Aborted");
   }
 
-  const results = await searchTavily(query, abortSignal);
+  const searchResults = await searchTavily(query, abortSignal);
+  const urls = searchResults.map((result) => result.link);
 
-  return results.map((result) => ({
-    date: result.publishedDate ?? "Unknown date",
-    title: result.title,
-    url: result.link,
-    snippet: result.snippet,
-  }));
-}
-
-async function scrapeUrls(urls: string[], abortSignal?: AbortSignal) {
-  if (abortSignal?.aborted) {
-    throw abortSignal.reason ?? new Error("Aborted");
-  }
-
-  const result = await scrapePages(urls);
-
-  if (result.success) {
-    return result.results.map(({ url, result: crawlResult }) => ({
+  const scrapeResult = await scrapePages(urls);
+  const scrapedContentByUrl = new Map(
+    scrapeResult.results.map(({ url, result: crawlResult }) => [
       url,
-      result: crawlResult.data,
-    }));
-  }
+      crawlResult.success
+        ? crawlResult.data
+        : `Error: ${crawlResult.error}`,
+    ]),
+  );
 
-  return result.results.map(({ url, result: crawlResult }) => ({
-    url,
-    result: crawlResult.success
-      ? crawlResult.data
-      : `Error: ${crawlResult.error}`,
-  }));
+  return {
+    query,
+    results: searchResults.map((result) => ({
+      date: result.publishedDate ?? "Unknown date",
+      title: result.title,
+      url: result.link,
+      snippet: result.snippet,
+      scrapedContent:
+        scrapedContentByUrl.get(result.link) ??
+        "Unable to scrape page content.",
+    })),
+  };
 }
 
 export async function runAgentLoop(
@@ -84,26 +81,12 @@ export async function runAgentLoop(
         continue;
       }
 
-      const results = await searchWeb(nextAction.query, opts.abortSignal);
-      const queryResult: QueryResult = {
-        query: nextAction.query,
-        results,
-      };
-
-      ctx.reportQueries([queryResult]);
-    } else if (nextAction.type === "scrape") {
-      if (!nextAction.urls || nextAction.urls.length === 0) {
-        ctx.incrementStep();
-        step++;
-        continue;
-      }
-
-      const scrapes: ScrapeResult[] = await scrapeUrls(
-        nextAction.urls,
+      const searchEntry = await searchAndScrape(
+        nextAction.query,
         opts.abortSignal,
       );
 
-      ctx.reportScrapes(scrapes);
+      ctx.reportSearch(searchEntry);
     } else if (nextAction.type === "answer") {
       return await answerQuestion(ctx, {
         langfuseTraceId: opts.langfuseTraceId,

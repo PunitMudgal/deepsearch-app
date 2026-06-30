@@ -14,20 +14,15 @@ export const actionSchema = z.object({
     ),
   reasoning: z.string().describe("The reason you chose this step."),
   type: z
-    .enum(["search", "scrape", "answer"])
+    .enum(["search", "answer"])
     .describe(
       `The type of action to take.
-      - 'search': Search the web for more information.
-      - 'scrape': Scrape a URL.
+      - 'search': Search the web for more information. Results include scraped page content automatically.
       - 'answer': Answer the user's question and complete the loop.`,
     ),
   query: z
     .string()
     .describe("The query to search for. Only required if type is 'search'.")
-    .optional(),
-  urls: z
-    .array(z.string())
-    .describe("The URLs to scrape. Required if type is 'scrape'.")
     .optional(),
 });
 
@@ -40,8 +35,7 @@ export const getNextAction = async (
     functionId: string;
   },
 ) => {
-  const queryHistory = context.getQueryHistory();
-  const scrapeHistory = context.getScrapeHistory();
+  const searchHistory = context.getSearchHistory();
 
   const result = await generateObject({
     model,
@@ -51,9 +45,8 @@ ${getSystemPrompt(context.getRequestHints())}
 
 You are deciding the next action in a research loop. Choose exactly one action:
 
-- search: Search the web when you need up-to-date information, facts you're unsure of, or more sources. Provide a focused query. Include the current date or a recent time window when the user asks for "latest" or "recent" information.
-- scrape: Scrape specific URLs when snippets are not enough and you need full page content to cite precisely. Pass URLs from prior search results. Typical flow: search → scrape top 1–3 URLs → answer.
-- answer: Stop the loop when you have enough information to answer the user's question. Prefer answering from gathered context when possible; do not guess if search/scrape returned nothing useful.
+- search: Search the web when you need up-to-date information, facts you're unsure of, or more sources. Provide a focused query. Each search automatically fetches and scrapes the top results, so you get full page content without a separate scrape step. Include the current date or a recent time window when the user asks for "latest" or "recent" information.
+- answer: Stop the loop when you have enough information to answer the user's question. Prefer answering from gathered context when possible; do not guess if search returned nothing useful.
 
 For every action, provide a concise title for the UI and clear reasoning for why you chose this step.
 
@@ -67,9 +60,7 @@ ${context.getLatestUserMessage()}
 
 Here is the research context gathered this turn:
 
-${queryHistory || "No searches yet."}
-
-${scrapeHistory || "No scrapes yet."}
+${searchHistory || "No searches yet."}
     `,
     experimental_telemetry: createLangfuseTelemetry({
       langfuseTraceId: opts.langfuseTraceId,

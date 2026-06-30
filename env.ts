@@ -38,7 +38,7 @@ export const env = createEnv({
     EVAL_DATASET: z
       .enum(["dev", "ci", "regression"])
       .default("dev"),
-    SEARCH_RESULTS_COUNT: z.coerce.number().default(10),
+    SEARCH_RESULTS_COUNT: z.coerce.number().default(3),
   },
 
   /**
