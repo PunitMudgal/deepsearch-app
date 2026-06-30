@@ -6,7 +6,7 @@ A research assistant built with Next.js that combines an LLM agent with web sear
 
 ### Research agent
 
-- **Agentic deep search** — Powered by Google Gemini 2.5 Flash via the [AI SDK v6](https://sdk.vercel.ai). The agent decides when to search the web or answer from its own knowledge. Each search automatically scrapes the top results for fuller context.
+- **Agentic deep search** — Powered by Google Gemini 2.5 Flash via the [AI SDK v6](https://sdk.vercel.ai). The agent decides when to search the web or answer from its own knowledge. Each search automatically scrapes the top results and summarizes them with Groq Qwen3 32B before answering, keeping context lean while preserving source diversity.
 - **Web search** — Tavily integration returns titles, snippets, links, and published dates for up-to-date queries.
 - **Web scraping** — Full-page content extraction with Cheerio and Turndown (HTML → markdown). Respects `robots.txt`, uses exponential backoff on failures, and caches results in Redis.
 - **Date-aware prompts** — The system prompt injects the current date and time so “latest” or “recent” questions produce appropriately scoped search queries.
@@ -45,7 +45,7 @@ A research assistant built with Next.js that combines an LLM agent with web sear
 | Layer | Tools |
 | --- | --- |
 | Framework | Next.js 16, React 19 |
-| AI | AI SDK v6, Google Gemini (agent), Groq (secondary tasks), Tavily |
+| AI | AI SDK v6, Google Gemini (agent), Groq (summarization + secondary tasks), Tavily |
 | Auth | NextAuth v5, Drizzle adapter |
 | Database | PostgreSQL, Drizzle ORM |
 | Cache / limits | Redis (ioredis) |

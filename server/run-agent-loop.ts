@@ -5,6 +5,7 @@ import type { WriteMessageAnnotation } from "@/lib/agent-annotations";
 import type { RequestHints } from "@/server/request-hints";
 import { scrapePages } from "@/server/search/scrape-pages";
 import { searchTavily } from "@/server/search/tavily";
+import { summarizeURL } from "@/server/summarize-url";
 import { answerQuestion } from "@/server/answer-question";
 import { getNextAction } from "@/server/get-next-action";
 import {
@@ -14,8 +15,10 @@ import {
 
 type AgentLoopResult = ReturnType<typeof streamText>;
 
-async function searchAndScrape(
+async function searchScrapeAndSummarize(
   query: string,
+  conversationHistory: string,
+  langfuseTraceId: string | undefined,
   abortSignal?: AbortSignal,
 ): Promise<SearchHistoryEntry> {
   if (abortSignal?.aborted) {
@@ -35,17 +38,43 @@ async function searchAndScrape(
     ]),
   );
 
+  const results = await Promise.all(
+    searchResults.map(async (result) => {
+      const date = result.publishedDate ?? "Unknown date";
+      const title = result.title;
+      const url = result.link;
+      const snippet = result.snippet;
+      const scrapedContent =
+        scrapedContentByUrl.get(url) ?? "Unable to scrape page content.";
+
+      const summary = await summarizeURL(
+        {
+          query,
+          conversationHistory,
+          metadata: {
+            date,
+            title,
+            url,
+            snippet,
+          },
+          scrapedContent,
+        },
+        { langfuseTraceId },
+      );
+
+      return {
+        date,
+        title,
+        url,
+        snippet,
+        summary,
+      };
+    }),
+  );
+
   return {
     query,
-    results: searchResults.map((result) => ({
-      date: result.publishedDate ?? "Unknown date",
-      title: result.title,
-      url: result.link,
-      snippet: result.snippet,
-      scrapedContent:
-        scrapedContentByUrl.get(result.link) ??
-        "Unable to scrape page content.",
-    })),
+    results,
   };
 }
 
@@ -81,8 +110,10 @@ export async function runAgentLoop(
         continue;
       }
 
-      const searchEntry = await searchAndScrape(
+      const searchEntry = await searchScrapeAndSummarize(
         nextAction.query,
+        ctx.getConversationHistory(),
+        opts.langfuseTraceId,
         opts.abortSignal,
       );
 

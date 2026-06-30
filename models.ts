@@ -14,6 +14,9 @@ const groq = createGroq({
 /** Primary model for the research agent (search and answer). */
 export const model = google("gemini-2.5-flash");
 
+/** Model for URL summarization via Groq. */
+export const summarizationModel = groq("qwen/qwen3-32b");
+
 /**
  * Secondary model for lightweight tasks (chat titles, eval scorers, etc.)
  * via Groq.

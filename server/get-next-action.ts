@@ -45,7 +45,7 @@ ${getSystemPrompt(context.getRequestHints())}
 
 You are deciding the next action in a research loop. Choose exactly one action:
 
-- search: Search the web when you need up-to-date information, facts you're unsure of, or more sources. Provide a focused query. Each search automatically fetches and scrapes the top results, so you get full page content without a separate scrape step. Include the current date or a recent time window when the user asks for "latest" or "recent" information.
+- search: Search the web when you need up-to-date information, facts you're unsure of, or more sources. Provide a focused query. Each search automatically fetches, scrapes, and summarizes the top results. Include the current date or a recent time window when the user asks for "latest" or "recent" information.
 - answer: Stop the loop when you have enough information to answer the user's question. Prefer answering from gathered context when possible; do not guess if search returned nothing useful.
 
 For every action, provide a concise title for the UI and clear reasoning for why you chose this step.

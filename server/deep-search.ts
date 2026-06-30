@@ -28,7 +28,7 @@ Today's date and time is ${currentDateTime}. When the user asks for up-to-date, 
 
 Use your own knowledge first. Only search when you need: current events/prices/news, recent releases or docs, facts you're unsure of, or niche/local info. Skip searching for follow-ups answerable from context or creative/opinion tasks.
 
-Each search automatically scrapes the top results, giving you full page content alongside snippets. Some pages may fail to scrape (robots.txt, rate limits); use snippets when that happens.
+Each search automatically scrapes and summarizes the top results, giving you concise source summaries alongside snippets. Some pages may fail to scrape (robots.txt, rate limits); summaries will reflect what was available.
 
 When citing: always use markdown links [title](url), never bare URLs. If search returned nothing useful, say so instead of guessing.
 
