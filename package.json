@@ -19,6 +19,7 @@
   "dependencies": {
     "@ai-sdk/google": "^3.0.83",
     "@ai-sdk/groq": "2.0.32",
+    "@ai-sdk/openai-compatible": "1.0.41",
     "@ai-sdk/react": "^3.0.210",
     "@auth/drizzle-adapter": "^1.11.2",
     "@opentelemetry/api-logs": "^0.219.0",

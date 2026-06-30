@@ -1,5 +1,6 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 import { env } from "@/env";
 
@@ -11,11 +12,17 @@ const groq = createGroq({
   apiKey: env.GROQ_API_KEY,
 });
 
+const openrouter = createOpenAICompatible({
+  name: "openrouter",
+  apiKey: env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
+});
+
 /** Primary model for the research agent (search and answer). */
 export const model = google("gemini-2.5-flash");
 
-/** Model for URL summarization via Groq. */
-export const summarizationModel = groq("qwen/qwen3-32b");
+/** Model for URL summarization via OpenRouter. */
+export const summarizationModel = openrouter.chatModel("moonshotai/kimi-k2.6:free");
 
 /**
  * Secondary model for lightweight tasks (chat titles, eval scorers, etc.)

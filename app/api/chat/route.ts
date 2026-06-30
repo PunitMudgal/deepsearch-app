@@ -20,6 +20,7 @@ import {
 } from "@/server/redis/rate-limit";
 
 export const maxDuration = 60;
+export const runtime = "nodejs";
 
 const langfuse = new Langfuse({
   environment: env.NODE_ENV,

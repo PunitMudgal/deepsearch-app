@@ -13,6 +13,7 @@ export const env = createEnv({
     AUTH_GITHUB_SECRET: z.string(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
     GROQ_API_KEY: z.string(),
+    OPENROUTER_API_KEY: z.string(),
     TAVILY_API_KEY: z.string(),
     REDIS_URL: z.string().url(),
     AUTH_SECRET:
@@ -59,6 +60,7 @@ export const env = createEnv({
     AUTH_GITHUB_SECRET: process.env.AUTH_GITHUB_SECRET,
     GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     GROQ_API_KEY: process.env.GROQ_API_KEY,
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     TAVILY_API_KEY: process.env.TAVILY_API_KEY,
     REDIS_URL: process.env.REDIS_URL,
     AUTH_SECRET: process.env.AUTH_SECRET,
