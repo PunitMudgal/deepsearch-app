@@ -2,10 +2,13 @@ import { generateText } from "ai";
 
 import { summarizationModel } from "@/models";
 import { createLangfuseTelemetry } from "@/server/langfuse-telemetry";
-import { redis } from "@/server/redis/redis";
+import {
+  buildCacheKey,
+  getCachedValue,
+  setCachedValue,
+} from "@/server/redis/redis";
 
-const CACHE_EXPIRY_SECONDS = 60 * 60 * 6;
-const CACHE_KEY_PREFIX = "summarizeURL:";
+const CACHE_KEY_PREFIX = "summarizeURL";
 
 const SUMMARIZER_SYSTEM_PROMPT = `You are a research extraction specialist. Given a research topic and raw web content, create a thoroughly detailed synthesis as a cohesive narrative that flows naturally between key concepts.
 
@@ -55,12 +58,12 @@ export async function summarizeURL(
   input: SummarizeURLInput,
   opts: { langfuseTraceId: string | undefined },
 ): Promise<string> {
-  const cacheKey = `${CACHE_KEY_PREFIX}${JSON.stringify(input)}`;
-  const cachedResult = await redis.get(cacheKey);
+  const cacheKey = buildCacheKey(CACHE_KEY_PREFIX, input);
+  const cachedResult = await getCachedValue<string>(cacheKey);
 
-  if (cachedResult) {
-    console.log(`Cache hit for ${cacheKey}`);
-    return JSON.parse(cachedResult) as string;
+  if (cachedResult !== null) {
+    console.log(`Cache hit for ${CACHE_KEY_PREFIX}`);
+    return cachedResult;
   }
 
   const { text } = await generateText({
@@ -74,7 +77,7 @@ export async function summarizeURL(
   });
 
   const summary = text.trim();
-  await redis.set(cacheKey, JSON.stringify(summary), "EX", CACHE_EXPIRY_SECONDS);
+  await setCachedValue(cacheKey, summary);
 
   return summary;
 }
