@@ -162,14 +162,44 @@ export async function POST(request: Request) {
         });
       };
 
-      const result = await streamFromDeepSearch({
+      // Start deep search in parallel with title generation
+      const deepSearchPromise = streamFromDeepSearch({
         messages,
         requestHints,
         langfuseTraceId: trace.id,
         writeMessageAnnotation,
       });
 
+      // If new chat, update the title in DB and send it via stream as soon as it's ready
+      const titleUpdatePromise = isNewChat
+        ? (async () => {
+            const generatedTitle = await titlePromise;
+
+            // Send title to the frontend immediately via stream data
+            writer.write({
+              type: "data-newChatTitle",
+              data: {
+                type: "CHAT_TITLE_UPDATED",
+                chatId,
+                title: generatedTitle,
+              },
+            });
+
+            // Update DB with the real title so sidebar fetches see it
+            await upsertChat({
+              userId: session.user.id,
+              chatId,
+              title: generatedTitle,
+              messages,
+            });
+          })()
+        : Promise.resolve();
+
+      const result = await deepSearchPromise;
       writer.merge(result.toUIMessageStream());
+
+      // Ensure title has been sent before finishing (usually already resolved)
+      await titleUpdatePromise;
     },
     onFinish: async ({ messages: updatedMessages }) => {
       const messagesWithAnnotations = attachAnnotationsToLastMessage(
@@ -177,24 +207,23 @@ export async function POST(request: Request) {
         annotations,
       );
 
-      const title = isNewChat ? await titlePromise : "";
-
       const upsertFinishSpan = trace.span({
         name: "upsert-chat-on-finish",
         input: {
           userId: session.user.id,
           chatId,
-          title: title || undefined,
+          title: isNewChat ? undefined : undefined,
           messageCount: messagesWithAnnotations.length,
         },
       });
 
       try {
+        // For new chats, title is already updated in DB from execute;
+        // just save the updated messages
         await upsertChat({
           userId: session.user.id,
           chatId,
           messages: messagesWithAnnotations,
-          ...(title ? { title } : {}),
         });
 
         upsertFinishSpan.end({

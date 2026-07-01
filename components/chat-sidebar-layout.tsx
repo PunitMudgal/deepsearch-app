@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
 import Link from "next/link";
 import { signIn, signOut } from "next-auth/react";
 import { siDiscord, siGithub } from "simple-icons/icons";
@@ -37,6 +37,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+
+// Context for updating chat titles from child components
+interface OnUpdateChatTitle {
+  (chatId: string, title: string): void;
+}
+
+const ChatTitleContext = createContext<OnUpdateChatTitle | null>(null);
+
+export function useUpdateChatTitle() {
+  return useContext(ChatTitleContext);
+}
 
 interface Chat {
   id: string;
@@ -90,13 +101,25 @@ function SidebarHeaderContent({ isAuthenticated }: { isAuthenticated: boolean })
 
 export function ChatSidebarLayout({
   activeChatId,
-  chats,
+  chats: initialChats,
   isAuthenticated,
   userImage,
   userName,
   userEmail,
   children,
 }: ChatSidebarLayoutProps) {
+  const [chats, setChats] = useState(initialChats);
+
+  // Keep server-fetched chats in sync with state on navigation
+  useEffect(() => {
+    setChats(initialChats);
+  }, [initialChats]);
+
+  const updateChatTitle = useCallback((chatId: string, title: string) => {
+    setChats((prev) =>
+      prev.map((c) => (c.id === chatId ? { ...c, title } : c)),
+    );
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -118,6 +141,7 @@ export function ChatSidebarLayout({
 
   return (
     <TooltipProvider>
+      <ChatTitleContext.Provider value={updateChatTitle}>
       <SidebarProvider className="dark h-svh overflow-hidden bg-zinc-950">
         <Sidebar collapsible="icon" className="border-r border-zinc-900/60 [&_[data-sidebar=sidebar]]:bg-[#0e0e11] text-zinc-300">
           <SidebarHeader className="p-0">
@@ -270,6 +294,7 @@ export function ChatSidebarLayout({
           <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         </SidebarInset>
       </SidebarProvider>
+      </ChatTitleContext.Provider>
     </TooltipProvider>
   );
 }

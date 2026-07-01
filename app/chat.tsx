@@ -6,11 +6,12 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SignInModal } from "@/components/sign-in-modal";
-import { isNewChatCreated } from "@/lib/chat";
+import { isNewChatCreated, isChatTitleUpdated } from "@/lib/chat";
 import { ChatInput } from "@/components/chat-input";
 import { ChatEmptyState } from "@/components/chat-empty-state";
 import { ChatMessages } from "@/components/chat-messages";
 import { CHAT_PARTICLE_COLORS } from "@/components/particles";
+import { useUpdateChatTitle } from "@/components/chat-sidebar-layout";
 import type { StoredUIMessage } from "@/server/chat";
 
 const Particles = dynamic(
@@ -34,6 +35,7 @@ export const ChatPage = ({
   initialMessages,
 }: ChatProps) => {
   const router = useRouter();
+  const updateChatTitle = useUpdateChatTitle();
   const [data, setData] = useState<unknown[]>([]);
   const { messages, sendMessage, status, error } = useChat({
     messages: initialMessages,
@@ -47,6 +49,11 @@ export const ChatPage = ({
     onData: (dataPart) => {
       if (dataPart.type === "data-newChatCreated") {
         setData((previous) => [...previous, dataPart.data]);
+      } else if (
+        dataPart.type === "data-newChatTitle" &&
+        isChatTitleUpdated(dataPart.data)
+      ) {
+        updateChatTitle?.(dataPart.data.chatId, dataPart.data.title);
       }
     },
   });
