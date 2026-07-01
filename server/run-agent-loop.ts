@@ -8,6 +8,7 @@ import { searchTavily } from "@/server/search/tavily";
 import { summarizeURL } from "@/server/summarize-url";
 import { answerQuestion } from "@/server/answer-question";
 import { getNextAction } from "@/server/get-next-action";
+import { queryRewriter } from "@/server/query-rewriter";
 import {
   SystemContext,
   type SearchHistoryEntry,
@@ -93,6 +94,37 @@ export async function runAgentLoop(
   let step = 0;
 
   while (!ctx.shouldStop()) {
+    const rewrite = await queryRewriter(ctx, {
+      langfuseTraceId: opts.langfuseTraceId,
+      functionId: `agent-query-rewriter-step-${step}`,
+    });
+
+    writeMessageAnnotation({
+      type: "NEW_PLAN",
+      title: rewrite.title,
+      plan: rewrite.plan,
+      queries: rewrite.queries,
+    });
+
+    const queries = rewrite.queries.filter((query) => query.trim().length > 0);
+
+    if (queries.length > 0) {
+      const searchEntries = await Promise.all(
+        queries.map((query) =>
+          searchScrapeAndSummarize(
+            query,
+            ctx.getConversationHistory(),
+            opts.langfuseTraceId,
+            opts.abortSignal,
+          ),
+        ),
+      );
+
+      for (const searchEntry of searchEntries) {
+        ctx.reportSearch(searchEntry);
+      }
+    }
+
     const nextAction = await getNextAction(ctx, {
       langfuseTraceId: opts.langfuseTraceId,
       functionId: `agent-get-next-action-step-${step}`,
@@ -103,22 +135,7 @@ export async function runAgentLoop(
       action: nextAction,
     });
 
-    if (nextAction.type === "search") {
-      if (!nextAction.query) {
-        ctx.incrementStep();
-        step++;
-        continue;
-      }
-
-      const searchEntry = await searchScrapeAndSummarize(
-        nextAction.query,
-        ctx.getConversationHistory(),
-        opts.langfuseTraceId,
-        opts.abortSignal,
-      );
-
-      ctx.reportSearch(searchEntry);
-    } else if (nextAction.type === "answer") {
+    if (nextAction.type === "answer") {
       return await answerQuestion(ctx, {
         langfuseTraceId: opts.langfuseTraceId,
         functionId: "agent-answer-question",

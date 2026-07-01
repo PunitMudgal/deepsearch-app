@@ -9,7 +9,7 @@ import { Loader2, Search } from "lucide-react";
 import { MessageCopyButton } from "@/components/message-copy-button";
 import { ReasoningSteps } from "@/components/reasoning-steps";
 import type { OurMessageAnnotation } from "@/lib/agent-annotations";
-import { getNewActionAnnotations } from "@/lib/agent-annotations";
+import { getMessageAnnotations } from "@/lib/agent-annotations";
 import { cn } from "@/lib/utils";
 
 export type MessagePart = NonNullable<UIMessage["parts"]>[number];
@@ -162,7 +162,7 @@ export const ChatMessage = ({
   const copyText = getMessageCopyText(parts);
   const hasCopyableText = copyText.trim().length > 0;
   const actionAnnotations = isAI
-    ? (annotations ?? getNewActionAnnotations(parts))
+    ? (annotations ?? getMessageAnnotations(parts))
     : [];
 
   return (

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
-import { Search } from "lucide-react";
+import { ListChecks, Search } from "lucide-react";
 
 import type { OurMessageAnnotation } from "@/lib/agent-annotations";
 
@@ -14,6 +14,14 @@ function Markdown({ children }: { children: string }) {
   return (
     <ReactMarkdown components={markdownComponents}>{children}</ReactMarkdown>
   );
+}
+
+function getAnnotationTitle(annotation: OurMessageAnnotation): string {
+  if (annotation.type === "NEW_PLAN") {
+    return annotation.title;
+  }
+
+  return annotation.action.title;
 }
 
 export function ReasoningSteps({
@@ -53,21 +61,45 @@ export function ReasoningSteps({
                 >
                   {index + 1}
                 </span>
-                {annotation.action.title}
+                {getAnnotationTitle(annotation)}
               </button>
 
               {isOpen ? (
                 <div className="mt-1 px-2 py-1">
-                  <div className="text-sm italic text-zinc-400">
-                    <Markdown>{annotation.action.reasoning}</Markdown>
-                  </div>
+                  {annotation.type === "NEW_PLAN" ? (
+                    <>
+                      <div className="text-sm italic text-zinc-400">
+                        <Markdown>{annotation.plan}</Markdown>
+                      </div>
 
-                  {annotation.action.type === "search" && annotation.action.query ? (
-                    <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
-                      <Search className="size-4 shrink-0" />
-                      <span>{annotation.action.query}</span>
-                    </div>
-                  ) : null}
+                      <div className="mt-2 space-y-1">
+                        {annotation.queries.map((query, queryIndex) => (
+                          <div
+                            key={queryIndex}
+                            className="flex items-center gap-2 text-sm text-zinc-400"
+                          >
+                            <Search className="size-4 shrink-0" />
+                            <span>{query}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-sm italic text-zinc-400">
+                        <Markdown>{annotation.action.reasoning}</Markdown>
+                      </div>
+
+                      <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
+                        <ListChecks className="size-4 shrink-0" />
+                        <span>
+                          {annotation.action.type === "answer"
+                            ? "Ready to answer"
+                            : "Continuing research"}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : null}
             </li>
