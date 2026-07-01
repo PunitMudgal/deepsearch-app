@@ -22,7 +22,8 @@ const openrouter = createOpenAICompatible({
 export const model = google("gemini-2.5-flash");
 
 /** Model for URL summarization via OpenRouter. */
-export const summarizationModel = openrouter.chatModel("qwen/qwen3-coder:free");
+// export const summarizationModel = openrouter.chatModel("qwen/qwen3-coder:free");
+export const summarizationModel = google("gemini-2.5-flash");
 
 /**
  * Secondary model for lightweight tasks (chat titles, eval scorers, etc.)

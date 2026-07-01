@@ -10,13 +10,15 @@ type TavilySearchResult = {
   link: string;
   snippet: string;
   publishedDate: string | null;
+  rawContent?: string;
 };
 
 const searchTavilyCached = cacheWithRedis(
-  "searchTavily",
+  "searchTavilyWithRawContent",
   async (query: string): Promise<TavilySearchResult[]> => {
     const response = await tvly.search(query, {
       maxResults: env.SEARCH_RESULTS_COUNT,
+      includeRawContent: "markdown",
     });
 
     return response.results.map((result) => ({
@@ -24,6 +26,7 @@ const searchTavilyCached = cacheWithRedis(
       link: result.url,
       snippet: result.content,
       publishedDate: result.publishedDate || null,
+      rawContent: result.rawContent,
     }));
   },
 );

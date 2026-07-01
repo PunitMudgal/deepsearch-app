@@ -3,7 +3,6 @@ import { streamText } from "ai";
 
 import type { WriteMessageAnnotation } from "@/lib/agent-annotations";
 import type { RequestHints } from "@/server/request-hints";
-import { scrapePages } from "@/server/search/scrape-pages";
 import { searchTavily } from "@/server/search/tavily";
 import { summarizeURL } from "@/server/summarize-url";
 import { answerQuestion } from "@/server/answer-question";
@@ -27,17 +26,6 @@ async function searchScrapeAndSummarize(
   }
 
   const searchResults = await searchTavily(query, abortSignal);
-  const urls = searchResults.map((result) => result.link);
-
-  const scrapeResult = await scrapePages(urls);
-  const scrapedContentByUrl = new Map(
-    scrapeResult.results.map(({ url, result: crawlResult }) => [
-      url,
-      crawlResult.success
-        ? crawlResult.data
-        : `Error: ${crawlResult.error}`,
-    ]),
-  );
 
   const results = await Promise.all(
     searchResults.map(async (result) => {
@@ -46,7 +34,7 @@ async function searchScrapeAndSummarize(
       const url = result.link;
       const snippet = result.snippet;
       const scrapedContent =
-        scrapedContentByUrl.get(url) ?? "Unable to scrape page content.";
+        result.rawContent ?? "Unable to scrape page content.";
 
       const summary = await summarizeURL(
         {
