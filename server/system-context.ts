@@ -2,18 +2,25 @@ import type { UIMessage } from "ai";
 
 import type { RequestHints } from "@/server/request-hints";
 
-type SearchResult = {
+export type QueryResultSearchResult = {
   date: string;
   title: string;
   url: string;
   snippet: string;
-  summary: string;
 };
 
-type SearchHistoryEntry = {
+export type QueryResult = {
   query: string;
-  results: SearchResult[];
+  results: QueryResultSearchResult[];
 };
+
+export type ScrapeResult = {
+  url: string;
+  result: string;
+};
+
+const toQueryResult = (query: QueryResultSearchResult) =>
+  [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
 
 function getLatestUserMessageFromMessages(messages: UIMessage[]): string {
   const userMessage = [...messages]
@@ -30,7 +37,8 @@ function getLatestUserMessageFromMessages(messages: UIMessage[]): string {
 
 export class SystemContext {
   private step = 0;
-  private searchHistory: SearchHistoryEntry[] = [];
+  private queryHistory: QueryResult[] = [];
+  private scrapeHistory: ScrapeResult[] = [];
   private messages: UIMessage[];
   private requestHints: RequestHints;
 
@@ -88,32 +96,47 @@ export class SystemContext {
   }
 
   shouldStop() {
-    return this.step >= 4;
+    return this.step >= 10;
   }
 
-  reportSearch(search: SearchHistoryEntry) {
-    this.searchHistory.push(search);
+  reportQueries(queries: QueryResult[]) {
+    this.queryHistory.push(...queries);
   }
 
-  getSearchHistory(): string {
-    return this.searchHistory
-      .map((search) =>
+  reportScrapes(scrapes: ScrapeResult[]) {
+    this.scrapeHistory.push(...scrapes);
+  }
+
+  getQueryHistory(): string {
+    return this.queryHistory
+      .map((query) =>
         [
-          `## Query: "${search.query}"`,
-          ...search.results.map((result) =>
-            [
-              `### ${result.date} - ${result.title}`,
-              result.url,
-              result.snippet,
-              `<summary>`,
-              result.summary,
-              `</summary>`,
-            ].join("\n\n"),
-          ),
+          `## Query: "${query.query}"`,
+          ...query.results.map(toQueryResult),
         ].join("\n\n"),
       )
       .join("\n\n");
   }
-}
 
-export type { SearchHistoryEntry, SearchResult };
+  getScrapeHistory(): string {
+    return this.scrapeHistory
+      .map((scrape) =>
+        [
+          `## Scrape: "${scrape.url}"`,
+          `<scrape_result>`,
+          scrape.result,
+          `</scrape_result>`,
+        ].join("\n\n"),
+      )
+      .join("\n\n");
+  }
+
+  getSearchHistory(): string {
+    return [
+      this.getQueryHistory(),
+      this.getScrapeHistory(),
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }
+}
