@@ -2,6 +2,8 @@
 
 A research assistant built with Next.js that combines an LLM agent with web search and page scraping. Ask questions, get answers backed by live sources, and browse your conversation history — all in a streaming chat UI.
 
+<img width="1917" height="978" alt="Screenshot 2026-07-02 153603" src="https://github.com/user-attachments/assets/f85eced1-68cc-4ff2-820d-f3ee10e5c62c" />
+
 ## Features
 
 ### Research agent
