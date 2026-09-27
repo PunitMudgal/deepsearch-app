@@ -29,7 +29,7 @@ export const summarizationModel = groq("openai/gpt-oss-20b");
  * Secondary model for lightweight tasks (chat titles, eval scorers, etc.)
  * via Groq.
  */
-export const secondaryModel = openrouter.chatModel("qwen/qwen3-coder:free");
+export const secondaryModel = openrouter.chatModel("openrouter/free");
 
 /** @deprecated Use `secondaryModel` instead. */
 export const factualityModel = secondaryModel;
