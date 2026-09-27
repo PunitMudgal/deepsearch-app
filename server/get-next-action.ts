@@ -9,9 +9,9 @@ export const actionSchema = z.object({
   title: z
     .string()
     .describe(
-      "The title of the action, to be displayed in the UI. Be extremely concise. 'Searching Saka's injury history', 'Checking HMRC industrial action', 'Comparing toaster ovens'",
+      "Concise action title for the UI, e.g. 'Searching Saka's injury history'.",
     ),
-  reasoning: z.string().describe("The reason you chose this step."),
+  reasoning: z.string().describe("One short sentence on why this step."),
   type: z.enum(["search", "answer"]).describe(
     `The type of action to take.
       - 'search': Search the web for more information.
@@ -43,19 +43,13 @@ export const getNextAction = async (
 Message History:
 ${context.getConversationHistory() || "No prior messages."}
 
-Based on this context, choose the next action:
+Choose the next action:
 1. If you need more information, use 'search' with a relevant query.
-2. If you have enough information to answer the question, use 'answer'.
+2. If you have enough information to answer, use 'answer'.
 
-Remember:
-- Only use 'search' if you need more information.
-- Use 'answer' when you have enough information to provide a complete answer.
+Search history so far (titles, URLs and snippets only):
 
-Here is the search and scrape history:
-
-${context.getQueryHistory()}
-
-${context.getScrapeHistory()}
+${context.getQueryHistory() || "No searches yet."}
       `,
       experimental_telemetry: createLangfuseTelemetry({
         langfuseTraceId: opts.langfuseTraceId,

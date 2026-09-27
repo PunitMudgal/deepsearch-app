@@ -1,6 +1,5 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 import { env } from "@/env";
 
@@ -10,12 +9,6 @@ const google = createGoogleGenerativeAI({
 
 const groq = createGroq({
   apiKey: env.GROQ_API_KEY,
-});
-
-const openrouter = createOpenAICompatible({
-  name: "openrouter",
-  apiKey: env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
 });
 
 /** Primary model for the research agent (search and answer). */
@@ -29,7 +22,7 @@ export const summarizationModel = groq("openai/gpt-oss-20b");
  * Secondary model for lightweight tasks (chat titles, eval scorers, etc.)
  * via Groq.
  */
-export const secondaryModel = openrouter.chatModel("openrouter/free");
+export const secondaryModel = groq("qwen/qwen3.8-27b");
 
 /** @deprecated Use `secondaryModel` instead. */
 export const factualityModel = secondaryModel;

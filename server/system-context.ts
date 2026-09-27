@@ -19,6 +19,8 @@ export type ScrapeResult = {
   result: string;
 };
 
+const MAX_SCRAPE_LENGTH = 3000;
+
 const toQueryResult = (query: QueryResultSearchResult) =>
   [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
 
@@ -124,7 +126,7 @@ export class SystemContext {
         [
           `## Scrape: "${scrape.url}"`,
           `<scrape_result>`,
-          scrape.result,
+          scrape.result.slice(0, MAX_SCRAPE_LENGTH),
           `</scrape_result>`,
         ].join("\n\n"),
       )
