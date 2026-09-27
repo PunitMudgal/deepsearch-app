@@ -66,15 +66,22 @@ export async function summarizeURL(
     return cachedResult;
   }
 
-  const { text } = await generateText({
-    model: summarizationModel,
-    system: SUMMARIZER_SYSTEM_PROMPT,
-    prompt: buildSummarizePrompt(input),
-    experimental_telemetry: createLangfuseTelemetry({
-      langfuseTraceId: opts.langfuseTraceId,
-      functionId: "summarize-url",
-    }),
-  });
+  let text: string;
+  try {
+    const result = await generateText({
+      model: summarizationModel,
+      system: SUMMARIZER_SYSTEM_PROMPT,
+      prompt: buildSummarizePrompt(input),
+      experimental_telemetry: createLangfuseTelemetry({
+        langfuseTraceId: opts.langfuseTraceId,
+        functionId: "summarize-url",
+      }),
+    });
+    text = result.text;
+  } catch (error) {
+    console.error("Failed to summarize URL:", error);
+    return "Failed to summarize content.";
+  }
 
   const summary = text.trim();
   await setCachedValue(cacheKey, summary);

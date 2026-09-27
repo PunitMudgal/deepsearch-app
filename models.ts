@@ -23,7 +23,7 @@ export const model = google("gemini-2.5-flash");
 
 /** Model for URL summarization via OpenRouter. */
 // export const summarizationModel = openrouter.chatModel("qwen/qwen3-coder:free");
-export const summarizationModel = groq("llama-3.1-8b-instant");
+export const summarizationModel = groq("openai/gpt-oss-20b");
 
 /**
  * Secondary model for lightweight tasks (chat titles, eval scorers, etc.)

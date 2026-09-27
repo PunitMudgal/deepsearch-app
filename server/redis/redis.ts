@@ -3,7 +3,15 @@ import { createHash } from "node:crypto";
 import { env } from "@/env";
 import Redis from "ioredis";
 
-export const redis = new Redis(env.REDIS_URL);
+export const redis = new Redis(env.REDIS_URL, {
+  lazyConnect: true,
+  maxRetriesPerRequest: 2,
+  retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 1000)),
+});
+
+redis.on("error", (err) => {
+  console.error("Redis connection error:", err.message);
+});
 
 export const CACHE_EXPIRY_SECONDS = 60 * 60 * 6; // 6 hours
 const CACHE_KEY_SEPARATOR = ":";

@@ -1,5 +1,5 @@
 import type { UIMessage } from "ai";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 import type { OurMessageAnnotation } from "@/lib/agent-annotations";
 import { db } from "@/server/db";
@@ -37,26 +37,60 @@ export const upsertChat = async (opts: {
         })
         .where(eq(chats.id, chatId));
 
-      await tx.delete(messages).where(eq(messages.chatId, chatId));
+      const existingMessages = await tx
+        .select({ id: messages.id })
+        .from(messages)
+        .where(eq(messages.chatId, chatId));
+
+      const existingIds = new Set(existingMessages.map((m) => m.id));
+      const newIds = new Set(chatMessages.map((m) => m.id));
+
+      const idsToDelete = [...existingIds].filter((id) => !newIds.has(id));
+      if (idsToDelete.length > 0) {
+        await tx
+          .delete(messages)
+          .where(
+            and(
+              eq(messages.chatId, chatId),
+              inArray(messages.id, idsToDelete),
+            ),
+          );
+      }
+
+      const messagesToInsert = chatMessages.filter(
+        (m) => !existingIds.has(m.id),
+      );
+      if (messagesToInsert.length > 0) {
+        await tx.insert(messages).values(
+          messagesToInsert.map((message) => ({
+            id: message.id,
+            chatId,
+            role: message.role,
+            parts: message.parts,
+            annotations: message.annotations,
+            order: chatMessages.findIndex((m) => m.id === message.id),
+          })),
+        );
+      }
     } else {
       await tx.insert(chats).values({
         id: chatId,
         userId,
         title: title ?? "New chat",
       });
-    }
 
-    if (chatMessages.length > 0) {
-      await tx.insert(messages).values(
-        chatMessages.map((message, index) => ({
-          id: message.id,
-          chatId,
-          role: message.role,
-          parts: message.parts,
-          annotations: message.annotations,
-          order: index,
-        })),
-      );
+      if (chatMessages.length > 0) {
+        await tx.insert(messages).values(
+          chatMessages.map((message, index) => ({
+            id: message.id,
+            chatId,
+            role: message.role,
+            parts: message.parts,
+            annotations: message.annotations,
+            order: index,
+          })),
+        );
+      }
     }
   });
 };

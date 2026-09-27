@@ -109,10 +109,21 @@ export function ChatSidebarLayout({
   children,
 }: ChatSidebarLayoutProps) {
   const [chats, setChats] = useState(initialChats);
+  const prevInitialChatsRef = useRef(initialChats);
 
-  // Keep server-fetched chats in sync with state on navigation
   useEffect(() => {
-    setChats(initialChats);
+    const prev = prevInitialChatsRef.current;
+    const hasChanged =
+      prev.length !== initialChats.length ||
+      prev.some(
+        (c, i) =>
+          c.id !== initialChats[i]?.id || c.title !== initialChats[i]?.title,
+      );
+
+    if (hasChanged) {
+      prevInitialChatsRef.current = initialChats;
+      setChats(initialChats);
+    }
   }, [initialChats]);
 
   const updateChatTitle = useCallback((chatId: string, title: string) => {

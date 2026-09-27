@@ -5,6 +5,7 @@ import {
   generateId,
 } from "ai";
 import { Langfuse } from "langfuse";
+import { z } from "zod";
 import { env } from "@/env";
 import type { OurMessageAnnotation } from "@/lib/agent-annotations";
 import { auth } from "@/server/auth";
@@ -27,6 +28,12 @@ const langfuse = new Langfuse({
   secretKey: env.LANGFUSE_SECRET_KEY,
   publicKey: env.LANGFUSE_PUBLIC_KEY,
   baseUrl: env.LANGFUSE_BASE_URL,
+});
+
+const requestSchema = z.object({
+  messages: z.array(z.any()),
+  chatId: z.string().min(1),
+  isNewChat: z.boolean(),
 });
 
 function attachAnnotationsToLastMessage(
@@ -70,13 +77,14 @@ export async function POST(request: Request) {
 
   const requestHints = getRequestHints(request);
 
-  const body = (await request.json()) as {
-    messages: UIMessage[];
-    chatId: string;
-    isNewChat: boolean;
-  };
+  const body = await request.json();
+  const parseResult = requestSchema.safeParse(body);
 
-  const { messages, chatId, isNewChat } = body;
+  if (!parseResult.success) {
+    return new Response("Invalid request body", { status: 400 });
+  }
+
+  const { messages, chatId, isNewChat } = parseResult.data;
 
   const trace = langfuse.trace({
     name: "chat",
@@ -88,7 +96,12 @@ export async function POST(request: Request) {
   });
 
   const titlePromise = isNewChat
-    ? generateChatTitle(messages, { langfuseTraceId: trace.id })
+    ? generateChatTitle(messages, { langfuseTraceId: trace.id }).catch(
+        (error) => {
+          console.error("Failed to generate chat title:", error);
+          return "New chat";
+        },
+      )
     : Promise.resolve("");
 
   const upsertInitialSpan = trace.span({
@@ -212,14 +225,11 @@ export async function POST(request: Request) {
         input: {
           userId: session.user.id,
           chatId,
-          title: isNewChat ? undefined : undefined,
           messageCount: messagesWithAnnotations.length,
         },
       });
 
       try {
-        // For new chats, title is already updated in DB from execute;
-        // just save the updated messages
         await upsertChat({
           userId: session.user.id,
           chatId,

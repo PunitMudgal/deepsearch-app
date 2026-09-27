@@ -59,10 +59,11 @@ export async function queryRewriter(
 ): Promise<QueryRewriteResult> {
   const searchHistory = context.getSearchHistory();
 
-  const result = await generateObject({
-    model,
-    schema: queryRewriteSchema,
-    prompt: `
+  try {
+    const result = await generateObject({
+      model,
+      schema: queryRewriteSchema,
+      prompt: `
 ${getSystemPrompt(context.getRequestHints())}
 
 ${PLANNING_PROMPT}
@@ -79,12 +80,20 @@ Research gathered so far this turn:
 ${searchHistory || "No searches yet."}
 
 If research has already been gathered, plan only the additional searches needed — do not repeat queries that have already been run unless a different angle is required.
-    `,
-    experimental_telemetry: createLangfuseTelemetry({
-      langfuseTraceId: opts.langfuseTraceId,
-      functionId: opts.functionId,
-    }),
-  });
+      `,
+      experimental_telemetry: createLangfuseTelemetry({
+        langfuseTraceId: opts.langfuseTraceId,
+        functionId: opts.functionId,
+      }),
+    });
 
-  return result.object;
+    return result.object;
+  } catch (error) {
+    console.error("Failed to rewrite query:", error);
+    return {
+      title: "Research",
+      plan: "Unable to generate research plan.",
+      queries: [context.getLatestUserMessage()],
+    };
+  }
 }

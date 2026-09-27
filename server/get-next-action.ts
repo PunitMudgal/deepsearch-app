@@ -31,14 +31,15 @@ export const getNextAction = async (
     langfuseTraceId: string | undefined;
     functionId: string;
   },
-) => {
-  const result = await generateObject({
-    model,
-    schema: actionSchema,
-    system: `
-    You are a helpful AI assistant that can search the web or answer questions. Your goal is to determine the next best action to take based on the current context.
-    `,
-    prompt: `
+): Promise<Action> => {
+  try {
+    const result = await generateObject({
+      model,
+      schema: actionSchema,
+      system: `
+      You are a helpful AI assistant that can search the web or answer questions. Your goal is to determine the next best action to take based on the current context.
+      `,
+      prompt: `
 Message History:
 ${context.getConversationHistory() || "No prior messages."}
 
@@ -55,12 +56,20 @@ Here is the search and scrape history:
 ${context.getQueryHistory()}
 
 ${context.getScrapeHistory()}
-    `,
-    experimental_telemetry: createLangfuseTelemetry({
-      langfuseTraceId: opts.langfuseTraceId,
-      functionId: opts.functionId,
-    }),
-  });
+      `,
+      experimental_telemetry: createLangfuseTelemetry({
+        langfuseTraceId: opts.langfuseTraceId,
+        functionId: opts.functionId,
+      }),
+    });
 
-  return result.object;
+    return result.object;
+  } catch (error) {
+    console.error("Failed to get next action:", error);
+    return {
+      title: "Answering question",
+      reasoning: "Failed to determine next action, defaulting to answer.",
+      type: "answer",
+    };
+  }
 };
